@@ -16,14 +16,22 @@ const (
 	ValidationRange       ErrorCode = "VALIDATION_RANGE"
 	
 	// Business rule error codes
-	BusinessRuleViolation ErrorCode = "BUSINESS_RULE_VIOLATION"
-	BusinessRuleConflict  ErrorCode = "BUSINESS_RULE_CONFLICT"
+	BusinessRuleViolation    ErrorCode = "BUSINESS_RULE_VIOLATION"
+	BusinessRuleConflict     ErrorCode = "BUSINESS_RULE_CONFLICT"
+	BusinessRuleUnauthorized ErrorCode = "BUSINESS_RULE_UNAUTHORIZED"
+	BusinessRuleNotFound     ErrorCode = "BUSINESS_RULE_NOT_FOUND"
+	BusinessRuleDuplicate    ErrorCode = "BUSINESS_RULE_DUPLICATE"
 	
 	// Repository error codes
-	RepositoryNotFound    ErrorCode = "REPOSITORY_NOT_FOUND"
-	RepositoryConnection  ErrorCode = "REPOSITORY_CONNECTION"
-	RepositoryConstraint  ErrorCode = "REPOSITORY_CONSTRAINT"
-	RepositoryInternal    ErrorCode = "REPOSITORY_INTERNAL"
+	RepositoryNotFound      ErrorCode = "REPOSITORY_NOT_FOUND"
+	RepositoryConnection    ErrorCode = "REPOSITORY_CONNECTION"
+	RepositoryConstraint    ErrorCode = "REPOSITORY_CONSTRAINT"
+	RepositoryInternal      ErrorCode = "REPOSITORY_INTERNAL"
+	RepositoryCreateFailed  ErrorCode = "REPOSITORY_CREATE_FAILED"
+	RepositoryUpdateFailed  ErrorCode = "REPOSITORY_UPDATE_FAILED"
+	RepositoryDeleteFailed  ErrorCode = "REPOSITORY_DELETE_FAILED"
+	RepositoryQueryFailed   ErrorCode = "REPOSITORY_QUERY_FAILED"
+	RepositoryMappingFailed ErrorCode = "REPOSITORY_MAPPING_FAILED"
 )
 
 // ValidationError represents input validation failures
@@ -83,7 +91,7 @@ func (e BusinessRuleError) UserMessage() string {
 }
 
 // NewBusinessRuleError creates a new business rule error
-func NewBusinessRuleError(rule string, code ErrorCode, message string) *BusinessRuleError {
+func NewBusinessRuleError(code ErrorCode, message string, rule string) *BusinessRuleError {
 	return &BusinessRuleError{
 		Rule:    rule,
 		Code:    code,
@@ -130,9 +138,9 @@ func (e RepositoryError) Unwrap() error {
 }
 
 // NewRepositoryError creates a new repository error
-func NewRepositoryError(operation string, code ErrorCode, message string, cause error) *RepositoryError {
+func NewRepositoryError(code ErrorCode, message string, cause error) *RepositoryError {
 	return &RepositoryError{
-		Operation: operation,
+		Operation: "",
 		Code:      code,
 		Message:   message,
 		Cause:     cause,

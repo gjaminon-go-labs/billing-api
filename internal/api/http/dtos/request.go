@@ -7,3 +7,8 @@ type CreateClientRequest struct {
 	Phone   string `json:"phone,omitempty"`
 	Address string `json:"address,omitempty"`
 }
+
+// GetUserRequest represents the request for getting user data
+type GetUserRequest struct {
+	ID string `json:"id" validate:"required,uuid"`
+}
