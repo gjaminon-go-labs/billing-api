@@ -1,0 +1,89 @@
+[
+  {
+    "description": "Valid client creation request with full data",
+    "request_body": {
+      "name": "John Doe",
+      "email": "john@example.com",
+      "phone": "+1234567890",
+      "address": "123 Main St"
+    },
+    "expected_status": 201,
+    "should_succeed": true
+  },
+  {
+    "description": "Valid client creation request with minimal data",
+    "request_body": {
+      "name": "Jane Valid",
+      "email": "jane.doe@company.org"
+    },
+    "expected_status": 201,
+    "should_succeed": true
+  },
+  {
+    "description": "Invalid request - empty email",
+    "request_body": {
+      "name": "John Doe",
+      "email": "",
+      "phone": "+1234567890",
+      "address": "123 Main St"
+    },
+    "expected_status": 400,
+    "should_succeed": false,
+    "expected_error_code": "VALIDATION_REQUIRED"
+  },
+  {
+    "description": "Invalid request - malformed email",
+    "request_body": {
+      "name": "Jane Smith",
+      "email": "invalid-email",
+      "phone": "+1234567890",
+      "address": "123 Main St"
+    },
+    "expected_status": 400,
+    "should_succeed": false,
+    "expected_error_code": "VALIDATION_FORMAT"
+  },
+  {
+    "description": "Invalid request - missing name",
+    "request_body": {
+      "email": "test@example.com",
+      "phone": "+1234567890"
+    },
+    "expected_status": 400,
+    "should_succeed": false,
+    "expected_error_code": "VALIDATION_REQUIRED"
+  },
+  {
+    "description": "Invalid request - email without domain",
+    "request_body": {
+      "name": "Bob Johnson",
+      "email": "test@",
+      "phone": "+1234567890"
+    },
+    "expected_status": 400,
+    "should_succeed": false,
+    "expected_error_code": "VALIDATION_FORMAT"
+  },
+  {
+    "description": "Invalid request - email missing local part",
+    "request_body": {
+      "name": "Alice Brown",
+      "email": "@example.com",
+      "phone": "+9876543210"
+    },
+    "expected_status": 400,
+    "should_succeed": false,
+    "expected_error_code": "VALIDATION_FORMAT"
+  },
+  {
+    "description": "Invalid request - invalid phone length",
+    "request_body": {
+      "name": "Charlie Wilson",
+      "email": "charlie@example.com",
+      "phone": "+123"
+    },
+    "expected_status": 400,
+    "should_succeed": false,
+    "expected_error_code": "VALIDATION_LENGTH"
+  }
+]

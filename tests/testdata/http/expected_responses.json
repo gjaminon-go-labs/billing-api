@@ -1,0 +1,63 @@
+{
+  "success_response_structure": {
+    "success": true,
+    "data": {
+      "id": "string",
+      "name": "string", 
+      "email": "string",
+      "phone": "string",
+      "address": "string",
+      "created_at": "timestamp",
+      "updated_at": "timestamp"
+    }
+  },
+  "error_response_structure": {
+    "success": false,
+    "error": {
+      "code": "string",
+      "message": "string",
+      "field": "string"
+    }
+  },
+  "validation_error_examples": {
+    "email_required": {
+      "success": false,
+      "error": {
+        "code": "VALIDATION_REQUIRED",
+        "message": "email is required",
+        "field": "email"
+      }
+    },
+    "email_format": {
+      "success": false,
+      "error": {
+        "code": "VALIDATION_FORMAT", 
+        "message": "email must contain @ symbol",
+        "field": "email"
+      }
+    },
+    "name_required": {
+      "success": false,
+      "error": {
+        "code": "VALIDATION_REQUIRED",
+        "message": "name is required", 
+        "field": "name"
+      }
+    },
+    "phone_length": {
+      "success": false,
+      "error": {
+        "code": "VALIDATION_LENGTH",
+        "message": "phone number must be 7-15 digits",
+        "field": "phone"
+      }
+    }
+  },
+  "server_error_example": {
+    "success": false,
+    "error": {
+      "code": "REPOSITORY_INTERNAL",
+      "message": "An internal error occurred"
+    }
+  }
+}

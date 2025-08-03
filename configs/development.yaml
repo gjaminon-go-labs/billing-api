@@ -1,0 +1,45 @@
+# Development environment configuration
+# Overrides base.yaml settings for local development
+
+# Use PostgreSQL storage for real database development
+storage:
+  type: "postgres"
+
+# Enable auto-migration in development for convenience
+migration:
+  auto_migrate: true
+
+server:
+  port: 8080
+
+database:
+  host: "localhost"
+  port: 5432
+  user: "postgres"
+  password: "postgres"
+  dbname: "billing_service_dev"
+  schema: "billing"
+  sslmode: "disable"
+  log_level: "info"
+
+logging:
+  level: "debug"
+  format: "text"
+  output: "stdout"
+
+api:
+  enable_cors: true
+  cors_origins:
+    - "http://localhost:3000"
+    - "http://localhost:3001"
+    - "http://localhost:8080"
+
+rate_limit:
+  enabled: false # Disable for development
+
+# Enable detailed metrics in development
+metrics:
+  enabled: true
+
+tracing:
+  enabled: false # Enable when needed for debugging

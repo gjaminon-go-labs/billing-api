@@ -1,0 +1,66 @@
+[
+  {
+    "name": "John Doe",
+    "email": "",
+    "phone": "",
+    "address": "",
+    "should_fail": true,
+    "description": "Empty email should fail"
+  },
+  {
+    "name": "Jane Smith",
+    "email": "invalid-email",
+    "phone": "+1234567890",
+    "address": "123 Main St",
+    "should_fail": true,
+    "description": "Email without @ symbol should fail"
+  },
+  {
+    "name": "Bob Johnson",
+    "email": "test@",
+    "phone": "",
+    "address": "",
+    "should_fail": true,
+    "description": "Email missing domain should fail"
+  },
+  {
+    "name": "Alice Brown",
+    "email": "@example.com",
+    "phone": "+9876543210",
+    "address": "",
+    "should_fail": true,
+    "description": "Email missing local part should fail"
+  },
+  {
+    "name": "Charlie Wilson",
+    "email": "test@@example.com",
+    "phone": "",
+    "address": "456 Oak Ave",
+    "should_fail": true,
+    "description": "Email with multiple @ symbols should fail"
+  },
+  {
+    "name": "Diana Miller",
+    "email": "test@example",
+    "phone": "",
+    "address": "",
+    "should_fail": true,
+    "description": "Email missing TLD should fail"
+  },
+  {
+    "name": "John Success",
+    "email": "john@example.com",
+    "phone": "+1234567890",
+    "address": "123 Main St",
+    "should_fail": false,
+    "description": "Valid client creation should succeed"
+  },
+  {
+    "name": "Jane Valid",
+    "email": "jane.doe@company.org",
+    "phone": "",
+    "address": "",
+    "should_fail": false,
+    "description": "Valid client with minimal data should succeed"
+  }
+]

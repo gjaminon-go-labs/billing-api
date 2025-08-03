@@ -1,0 +1,48 @@
+# Production environment configuration
+# Overrides base.yaml settings for production deployment
+
+# Use PostgreSQL storage for production persistence
+storage:
+  type: "postgres"
+
+# Disable auto-migration in production for safety
+migration:
+  auto_migrate: false # Require manual migration approval
+
+# Production database (via Kubernetes secrets/environment variables)
+database:
+  dbname: "billing_service"
+  sslmode: "require" # Secure connection in production
+  log_level: "error" # Minimal database logging
+
+# Production logging (structured JSON)
+logging:
+  level: "info"
+  format: "json"
+  output: "stdout" # For Kubernetes log collection
+
+# Production CORS (restricted origins)
+api:
+  cors_origins:
+    - "https://yourdomain.com"
+    - "https://app.yourdomain.com"
+
+# Enable rate limiting in production
+rate_limit:
+  enabled: true
+  requests_per_minute: 60
+  burst: 10
+
+# Production health checks
+health:
+  database_check: true
+
+# Production metrics
+metrics:
+  enabled: true
+  namespace: "billing_service_prod"
+
+# Production tracing (enable for debugging)
+tracing:
+  enabled: false # Enable when needed for debugging
+  service_name: "billing-service-prod"

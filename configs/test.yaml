@@ -1,0 +1,44 @@
+# Test environment configuration
+# Used specifically for integration tests that require PostgreSQL
+
+# Use PostgreSQL storage for integration tests
+storage:
+  type: "postgres"
+
+# Enable auto-migration for integration tests
+migration:
+  enabled: true
+  auto_migrate: true
+
+# Test database configuration
+database:
+  host: "localhost"
+  port: 5433  # Docker PostgreSQL port to avoid conflicts with local PostgreSQL
+  user: "postgres"
+  password: "postgres"
+  dbname: "billing_service_test"
+  schema: "billing"
+  sslmode: "disable"
+  log_level: "error" # Minimal logging during tests
+
+# Test logging (minimal for clean test output)
+logging:
+  level: "error"
+  format: "text"
+  output: "stdout"
+
+# Disable unnecessary features during tests
+api:
+  enable_cors: false
+
+rate_limit:
+  enabled: false
+
+health:
+  database_check: false # Skip health checks during tests
+
+metrics:
+  enabled: false
+
+tracing:
+  enabled: false
