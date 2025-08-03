@@ -6,7 +6,7 @@ import (
 )
 
 // TestFunction demonstrates some code patterns for Claude to review
-// @claude please review this code for best practices, performance, and Go idioms
+// This function has several intentional issues for testing Claude's review capabilities
 func TestFunction(input string) string {
 	// Potential issues for Claude to catch:
 	// 1. No error handling
