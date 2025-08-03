@@ -1,0 +1,9 @@
+# Test File for Branch Protection
+
+This is a dummy file created to test:
+- Branch protection rules
+- Pull request workflow
+- Self-merge capability as repository owner
+
+Date: August 3, 2025
+Purpose: Verify that branch protection allows PR workflow while enabling self-merge
