@@ -18,7 +18,7 @@
 // - ClientHandler (API layer)
 // - BillingService (application layer)
 // - ClientRepository (repository pattern)
-// - InMemoryStorage (test infrastructure)
+// - PostgreSQL Storage (test infrastructure)
 package http
 
 import (
@@ -32,11 +32,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/gjaminon-go-labs/billing-api/internal/application"
-	"github.com/gjaminon-go-labs/billing-api/internal/infrastructure/repository"
 	"github.com/gjaminon-go-labs/billing-api/internal/api/http/dtos"
-	"github.com/gjaminon-go-labs/billing-api/internal/api/http/handlers"
-	"github.com/gjaminon-go-labs/billing-api/tests/infrastructure"
+	"github.com/gjaminon-go-labs/billing-api/tests/testhelpers"
 )
 
 type HTTPTestCase struct {
@@ -51,11 +48,8 @@ func TestClientHandler_CreateClient(t *testing.T) {
 	// Load test data
 	testCases := loadHTTPTestCases(t)
 	
-	// Set up dependencies
-	storage := infrastructure.NewInMemoryStorage()
-	clientRepo := repository.NewClientRepository(storage)
-	billingService := application.NewBillingService(clientRepo)
-	handler := handlers.NewClientHandler(billingService)
+	// Set up integration test server with PostgreSQL storage
+	server := testhelpers.NewIntegrationTestServer()
 
 	// Test each scenario
 	for _, testCase := range testCases {
@@ -70,8 +64,8 @@ func TestClientHandler_CreateClient(t *testing.T) {
 			// Create response recorder
 			rr := httptest.NewRecorder()
 
-			// Call handler
-			handler.CreateClient(rr, req)
+			// Call handler through server
+			server.Handler().ServeHTTP(rr, req)
 
 			// Check status code
 			assert.Equal(t, testCase.ExpectedStatus, rr.Code, "Status code mismatch for: %s", testCase.Description)
@@ -117,17 +111,14 @@ func TestClientHandler_CreateClient(t *testing.T) {
 }
 
 func TestClientHandler_CreateClient_MethodNotAllowed(t *testing.T) {
-	// Set up dependencies
-	storage := infrastructure.NewInMemoryStorage()
-	clientRepo := repository.NewClientRepository(storage)
-	billingService := application.NewBillingService(clientRepo)
-	handler := handlers.NewClientHandler(billingService)
+	// Set up integration test server with PostgreSQL storage
+	server := testhelpers.NewIntegrationTestServer()
 
 	// Test GET method (should be method not allowed)
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/clients", nil)
 	rr := httptest.NewRecorder()
 
-	handler.CreateClient(rr, req)
+	server.Handler().ServeHTTP(rr, req)
 
 	// Check status code
 	assert.Equal(t, http.StatusMethodNotAllowed, rr.Code)
@@ -143,18 +134,15 @@ func TestClientHandler_CreateClient_MethodNotAllowed(t *testing.T) {
 }
 
 func TestClientHandler_CreateClient_InvalidJSON(t *testing.T) {
-	// Set up dependencies
-	storage := infrastructure.NewInMemoryStorage()
-	clientRepo := repository.NewClientRepository(storage)
-	billingService := application.NewBillingService(clientRepo)
-	handler := handlers.NewClientHandler(billingService)
+	// Set up integration test server with PostgreSQL storage
+	server := testhelpers.NewIntegrationTestServer()
 
 	// Test invalid JSON
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/clients", bytes.NewReader([]byte("invalid json")))
 	req.Header.Set("Content-Type", "application/json")
 	rr := httptest.NewRecorder()
 
-	handler.CreateClient(rr, req)
+	server.Handler().ServeHTTP(rr, req)
 
 	// Check status code
 	assert.Equal(t, http.StatusBadRequest, rr.Code)

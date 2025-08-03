@@ -1,6 +1,4 @@
--- Create billing schema if it doesn't exist
-CREATE SCHEMA IF NOT EXISTS billing;
-
+-- Note: Schema creation is handled by infrastructure provisioning
 -- Create clients table
 CREATE TABLE billing.clients (
     id VARCHAR(36) PRIMARY KEY,

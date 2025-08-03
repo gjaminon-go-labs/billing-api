@@ -35,20 +35,12 @@ func NewPostgreSQLStorage(db *gorm.DB) *PostgreSQLStorage {
 		db: db,
 	}
 	
-	// Auto-migrate the storage table
-	if err := storage.migrate(); err != nil {
-		// Log error but don't fail - might be permissions issue
-		// Production systems should handle migrations separately
-		fmt.Printf("⚠️  Storage table migration warning: %v\n", err)
-	}
+	// Note: Table creation is handled by the migration system using the migration user
+	// The application user only has DML permissions for security
 	
 	return storage
 }
 
-// migrate creates the storage table if it doesn't exist
-func (s *PostgreSQLStorage) migrate() error {
-	return s.db.AutoMigrate(&StorageRecord{})
-}
 
 // Store saves a value with the given key
 func (s *PostgreSQLStorage) Store(key string, value interface{}) error {
@@ -125,6 +117,12 @@ func (s *PostgreSQLStorage) Close() error {
 	}
 	
 	return sqlDB.Close()
+}
+
+// GetDB returns the underlying GORM DB instance for testing purposes
+// This method is intended for use by test helpers and should not be used in production code
+func (s *PostgreSQLStorage) GetDB() *gorm.DB {
+	return s.db
 }
 
 // Stats returns storage statistics

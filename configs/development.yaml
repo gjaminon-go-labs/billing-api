@@ -15,12 +15,22 @@ server:
 database:
   host: "localhost"
   port: 5432
-  user: "postgres"
-  password: "postgres"
-  dbname: "billing_service_dev"
-  schema: "billing"
+  user: "billing_app_dev_user"        # Application user for runtime (DML only)
+  password: "billing_app_dev_2025"    # Application user password
+  dbname: "go-labs-dev"               # Shared application database
+  schema: "billing"                   # Service-specific schema
   sslmode: "disable"
   log_level: "info"
+
+# Migration database configuration (for schema changes)
+migration_database:
+  host: "localhost"
+  port: 5432
+  user: "billing_migration_dev_user"  # Migration user for DDL operations
+  password: "billing_migration_dev_2025" # Migration user password
+  dbname: "go-labs-dev"               # Same database, different user
+  schema: "billing"                   # Service-specific schema
+  sslmode: "disable"
 
 logging:
   level: "debug"

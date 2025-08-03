@@ -57,8 +57,8 @@ internal/
 ## 📋 Prerequisites
 
 - **Go 1.21 or higher**
-- **Docker** (essential for testing and local development)
-- **PostgreSQL 12+** (optional - Docker provides this automatically)
+- **PostgreSQL 12+** (required for integration tests and development)
+- **psql command-line tool** (for database management)
 
 ## 🏃‍♂️ Quick Start
 
@@ -68,36 +68,34 @@ cd billing-api
 make restore   # Install/update dependencies
 ```
 
-### 2. Development Environment Setup
+### 2. Set Up PostgreSQL
 ```bash
-make dev-setup # Starts PostgreSQL + runs migrations automatically
+# Create required databases
+psql -U postgres -c "CREATE DATABASE billing_service_dev;"
+psql -U postgres -c "CREATE DATABASE billing_service_test;"
 ```
 
-### 3. Run the Application
+### 3. Run Database Migrations
+```bash
+make migrate-up                    # Development database
+ENVIRONMENT=test make migrate-up   # Test database
+```
+
+### 4. Run the Application
 ```bash
 make run-dev   # Starts server in development mode on :8080
 ```
 
-### 4. Verify Everything Works
+### 5. Verify Everything Works
 ```bash
-make test-all  # Runs all tests with smart PostgreSQL detection
-```
-
-### Alternative: Manual Setup
-```bash
-# 1. Start PostgreSQL manually
-make docker-up        # Start PostgreSQL container (port 5433)
-
-# 2. Run migrations
-make migrate-up       # Apply database migrations
-
-# 3. Run application
-make run-dev          # Start development server
+make test-unit         # Fast unit tests (memory storage)
+make test-integration  # Integration tests (requires PostgreSQL)
+make test-all          # Both unit and integration tests
 ```
 
 ## 🧪 Testing Strategy
 
-The service implements a comprehensive testing strategy with automatic PostgreSQL management and test isolation.
+The service implements a simplified testing strategy with clear storage separation and local PostgreSQL requirement.
 
 ### Test Types
 
@@ -106,41 +104,42 @@ The service implements a comprehensive testing strategy with automatic PostgreSQ
 make test-unit         # Fast tests with in-memory storage
 ```
 - **Purpose**: Test domain logic and business rules in isolation
-- **Storage**: In-memory (no database required)
+- **Storage**: In-memory only (no database required)
 - **Speed**: Very fast (< 1 second)
 - **Isolation**: Each test gets fresh memory state
 
-#### Integration Tests (PostgreSQL Storage)
+#### Integration Tests (Local PostgreSQL)
 ```bash
-make test-integration  # Tests with real PostgreSQL database
+make test-integration  # Tests with local PostgreSQL database
 ```
 - **Purpose**: Test database interactions and API endpoints
-- **Storage**: PostgreSQL test database (`billing_service_test`)
-- **Speed**: Moderate (with Docker container recreation)
-- **Isolation**: Fresh Docker container for every test run
+- **Storage**: Local PostgreSQL (`billing_service_test` on localhost:5432)
+- **Speed**: Moderate (depends on local PostgreSQL performance)
+- **Isolation**: Auto-migration ensures clean test state
 
-#### All Tests (Smart PostgreSQL Detection)
+#### All Tests
 ```bash
 make test-all          # Runs both unit and integration tests
 ```
+- Runs unit tests first (fast feedback)
+- Then runs integration tests (requires PostgreSQL)
+- Fails fast if PostgreSQL not available
 
-**Smart Detection Logic:**
-1. **Docker container exists** → Recreates for fresh test isolation
-2. **Local PostgreSQL running** → Uses existing instance  
-3. **No PostgreSQL found** → Creates fresh Docker container
+### Prerequisites for Integration Tests
 
-### Test Isolation Benefits
+**Local PostgreSQL Required:**
+- PostgreSQL running on `localhost:5432`
+- Database `billing_service_test` must exist
+- Standard credentials: `postgres/postgres`
 
+**Error if PostgreSQL not available:**
 ```bash
-# First run
-make test-all
-# 🔄 Docker PostgreSQL container found - recreating for fresh test isolation...
-# ✅ All tests pass with clean database state
-
-# Second run  
-make test-all
-# 🔄 Docker PostgreSQL container found - recreating for fresh test isolation...
-# ✅ All tests pass with completely fresh state (no data contamination)
+$ make test-integration
+❌ Error: Cannot connect to PostgreSQL at localhost:5432
+   Please ensure:
+   1. PostgreSQL is running locally
+   2. Database 'billing_service_test' exists
+   3. Connection credentials are correct
 ```
 
 ### Test Organization
@@ -157,37 +156,36 @@ tests/
 └── testdata/                # External test data (JSON files)
 ```
 
-### PostgreSQL Configuration for Tests
-
-**Port Configuration:**
-- **Docker PostgreSQL**: Port 5433 (avoids conflicts with local PostgreSQL on 5432)
-- **Test Database**: `billing_service_test` (separate from development)
-- **Custom Port**: Set `DOCKER_DB_PORT=xxxx` for different port
+### Database Configuration
 
 **Database Hierarchy:**
 ```
-Production:         billing_service      (PostgreSQL)
-Development:        billing_service_dev  (PostgreSQL) 
-Integration Tests:  billing_service_test (PostgreSQL)
+Production:         billing_service      (PostgreSQL on localhost:5432)
+Development:        billing_service_dev  (PostgreSQL on localhost:5432) 
+Integration Tests:  billing_service_test (PostgreSQL on localhost:5432)
 Unit Tests:         in-memory            (no database)
 ```
+
+**Local PostgreSQL Setup:**
+- Single PostgreSQL instance on standard port 5432
+- Multiple databases for different environments
+- No port conflicts or Docker complexity
 
 ### Test Commands Reference
 
 ```bash
-# Basic test commands
+# Test commands
 make test-unit         # Unit tests only (fast, memory storage)
-make test-integration  # Integration tests only (PostgreSQL)
-make test-all         # All tests (smart PostgreSQL management)
+make test-integration  # Integration tests only (requires local PostgreSQL)
+make test-all          # Both unit and integration tests
 
-# PostgreSQL management  
-make check-postgres   # Check PostgreSQL status and recreate if needed
-make docker-up        # Start PostgreSQL container manually
-make docker-down      # Stop PostgreSQL container
-make recreate-docker-postgres # Force recreate container
+# Database setup
+psql -U postgres -c "CREATE DATABASE billing_service_dev;"
+psql -U postgres -c "CREATE DATABASE billing_service_test;"
 
-# Test environment setup
-make test-setup       # Set up test databases and run migrations
+# Migration commands
+make migrate-up                    # Development database
+ENVIRONMENT=test make migrate-up   # Test database
 ```
 
 ## 🗄️ Database & Migrations
@@ -293,7 +291,6 @@ MIGRATION_AUTO_MIGRATE=false
 ```bash
 # Dependencies and setup
 make restore           # Install/update package dependencies
-make dev-setup         # Complete development setup (PostgreSQL + migrations)
 
 # Application commands  
 make run-dev           # Run application in development mode
@@ -301,23 +298,16 @@ make run-prod          # Run application in production mode
 make build             # Build application binaries
 make clean             # Clean build artifacts
 
-# Testing commands
+# Testing commands (requires local PostgreSQL for integration tests)
 make test-unit         # Run unit tests only (in-memory storage)
-make test-integration  # Run integration tests only (PostgreSQL test DB)
-make test-all          # Run all tests (smart: fresh Docker or existing local PostgreSQL)
-make test-setup        # Set up PostgreSQL test environment
+make test-integration  # Run integration tests only (requires local PostgreSQL)
+make test-all          # Run all tests (unit + integration)
 
 # Database & migration commands
 make migrate-up        # Run all pending database migrations
 make migrate-down      # Roll back one database migration
 make migrate-status    # Show current migration status
 make migrate-reset     # Reset database migrations (development only)
-
-# PostgreSQL management
-make docker-up         # Start PostgreSQL container (port 5433)
-make docker-down       # Stop PostgreSQL container  
-make check-postgres    # Check PostgreSQL status, recreate Docker for test isolation
-make recreate-docker-postgres # Recreate container for fresh state
 
 # Utility commands
 make help              # Show all available commands with descriptions
@@ -335,20 +325,17 @@ LOG_LEVEL=debug                  # Logging level: debug, info, warn, error
 
 # Database configuration
 DATABASE_HOST=localhost          # PostgreSQL host
-DATABASE_PORT=5432              # PostgreSQL port (5433 for Docker)
+DATABASE_PORT=5432              # PostgreSQL port (standard)
 DATABASE_USER=postgres          # Database username
 DATABASE_PASSWORD=postgres      # Database password
 DATABASE_NAME=billing_service_dev # Database name
 
 # Storage configuration  
-STORAGE_TYPE=postgres           # Storage type: postgres (memory only for tests)
+STORAGE_TYPE=postgres           # Storage type: postgres (memory only for unit tests)
 
 # Migration configuration
 MIGRATION_ENABLED=true          # Enable database migrations
-MIGRATION_AUTO_MIGRATE=false   # Auto-run migrations (true for tests)
-
-# Docker configuration
-DOCKER_DB_PORT=5433            # PostgreSQL port for Docker container
+MIGRATION_AUTO_MIGRATE=false   # Auto-run migrations (true for integration tests)
 ```
 
 ### Configuration Hierarchy
@@ -371,11 +358,11 @@ configs/
 
 **Examples:**
 ```bash
-# Development with environment override
-ENVIRONMENT=development DATABASE_PORT=5433 make run-dev
+# Development with standard PostgreSQL
+ENVIRONMENT=development make run-dev
 
-# Test environment with custom Docker port
-DOCKER_DB_PORT=15432 make test-all
+# Test environment with custom credentials
+DATABASE_USER=myuser DATABASE_PASSWORD=mypass make test-all
 
 # Production with environment variables
 ENVIRONMENT=production DATABASE_HOST=prod-db.company.com make run-prod
@@ -436,79 +423,75 @@ GET /health
 }
 ```
 
-## 🐳 Docker Configuration & Troubleshooting
+## 🔧 PostgreSQL Setup & Troubleshooting
 
-### Docker PostgreSQL Management
+### Local PostgreSQL Installation
 
-The service uses Docker to provide consistent PostgreSQL environments across development and testing.
+The service requires local PostgreSQL installation for integration tests and development.
 
-**Default Configuration:**
-- **Container Name**: `billing-postgres`
-- **Docker Port**: `5433` (avoids conflicts with local PostgreSQL on 5432)
-- **PostgreSQL Version**: `15`
-- **Databases Created**: `billing_service_dev`, `billing_service_test`
+**Requirements:**
+- **PostgreSQL 12+** running on `localhost:5432`
+- **Databases**: `billing_service_dev`, `billing_service_test`
+- **Credentials**: Standard `postgres/postgres`
 
-### Port Configuration
+### Initial Setup
 
-**Avoiding PostgreSQL Conflicts:**
+**1. Install PostgreSQL (if not already installed):**
 ```bash
-# Default setup (recommended)
-make docker-up         # Uses port 5433 (conflict-free)
+# Ubuntu/Debian
+sudo apt-get install postgresql postgresql-client
 
-# Custom port if needed  
-DOCKER_DB_PORT=15432 make docker-up   # Uses port 15432
+# macOS
+brew install postgresql
+brew services start postgresql
 
-# Check what's running on PostgreSQL ports
-make check-postgres    # Smart detection of existing PostgreSQL
+# RHEL/CentOS
+sudo dnf install postgresql postgresql-server
+sudo postgresql-setup initdb
+sudo systemctl start postgresql
 ```
 
-**Port Usage:**
-- **5432**: Local PostgreSQL (if installed)
-- **5433**: Docker PostgreSQL (default)
-- **Custom**: Set via `DOCKER_DB_PORT` environment variable
+**2. Create Required Database:**
+```bash
+# Create databases
+psql -U postgres -c "CREATE DATABASE billing_service_dev;"
+psql -U postgres -c "CREATE DATABASE billing_service_test;"
+
+# Verify databases exist
+psql -U postgres -l | grep billing_service
+```
+
+**3. Run Migrations:**
+```bash
+make migrate-up                    # Development database
+ENVIRONMENT=test make migrate-up   # Test database
+```
 
 ### Troubleshooting Common Issues
 
-#### Issue: Container Name Conflict
-```bash
-# Error: container name 'billing-postgres' is already in use
-# Solution: Recreate the container
-make recreate-docker-postgres
-```
-
-#### Issue: Port Already in Use
-```bash
-# Error: port 5433 is already allocated
-# Solution 1: Use different port
-DOCKER_DB_PORT=15432 make docker-up
-
-# Solution 2: Stop conflicting container
-docker ps | grep 5433
-docker stop <container-name>
-make docker-up
-```
-
 #### Issue: PostgreSQL Connection Refused
 ```bash
-# Error: connection refused to localhost:5433
-# Check container status
-docker ps | grep billing-postgres
-
-# If not running, start it
-make docker-up
-
-# If still failing, recreate
-make recreate-docker-postgres
+# Error: connection refused to localhost:5432
+# Solution: Start PostgreSQL service
+sudo systemctl start postgresql    # Linux
+brew services start postgresql     # macOS
 ```
 
 #### Issue: Database Does Not Exist
 ```bash
 # Error: database "billing_service_test" does not exist
-# Solution: Recreate container (auto-creates databases)
-make recreate-docker-postgres
+# Solution: Create missing databases
+psql -U postgres -c "CREATE DATABASE billing_service_dev;"
+psql -U postgres -c "CREATE DATABASE billing_service_test;"
+```
 
-# Or create manually
-docker exec billing-postgres psql -U postgres -c "CREATE DATABASE billing_service_test;"
+#### Issue: Authentication Failed
+```bash
+# Error: authentication failed for user "postgres"
+# Solution: Check PostgreSQL authentication (pg_hba.conf)
+# Or use environment variables:
+export PGUSER=your_username
+export PGPASSWORD=your_password
 ```
 
 #### Issue: Migration Failures
@@ -521,78 +504,48 @@ make migrate-status
 make migrate-reset
 
 # Check database connection
-docker exec billing-postgres psql -U postgres -l
+psql -U postgres -d billing_service_dev -c "SELECT version();"
 ```
 
-### Smart PostgreSQL Detection Scenarios
+### Testing Workflow
 
-The `make test-all` command intelligently handles different PostgreSQL setups:
+The simplified `make test-all` command works as follows:
 
-**Scenario 1: Docker PostgreSQL Running**
+**Normal Workflow:**
 ```bash
 $ make test-all
-🔍 Checking PostgreSQL status on port 5433...
-🔄 Docker PostgreSQL container found - recreating for fresh test isolation...
-🗑️  Removing existing container...
-🐘 Creating fresh PostgreSQL container...
-✅ Fresh PostgreSQL container ready for testing
-🧪 Running all tests (unit + integration)...
+Running all tests (unit + integration)...
+Running unit tests (domain layer only)...
+✅ Unit tests pass (fast, memory storage)
+
+Running integration tests (requires local PostgreSQL)...
+Checking PostgreSQL connectivity...
+✅ PostgreSQL connection successful
+✅ Integration tests pass (local PostgreSQL)
 ```
 
-**Scenario 2: Local PostgreSQL Running**
+**Error if PostgreSQL not available:**
 ```bash
 $ make test-all
-🔍 Checking PostgreSQL status on port 5433...
-✅ Local PostgreSQL detected on port 5433 - using existing instance
-🧪 Running all tests (unit + integration)...
+Running all tests (unit + integration)...
+Running unit tests (domain layer only)...
+✅ Unit tests pass
+
+Running integration tests (requires local PostgreSQL)...
+❌ Error: Cannot connect to PostgreSQL at localhost:5432
+   Please ensure:
+   1. PostgreSQL is running locally
+   2. Database 'billing_service_test' exists
+   3. Connection credentials are correct
 ```
 
-**Scenario 3: No PostgreSQL Running**
-```bash
-$ make test-all
-🔍 Checking PostgreSQL status on port 5433...
-🐘 No PostgreSQL found - creating fresh Docker container...
-✅ Fresh PostgreSQL container ready for testing
-🧪 Running all tests (unit + integration)...
-```
+### Benefits of Simplified Approach
 
-### CI/CD Considerations
-
-**GitHub Actions/CI Environment:**
-```yaml
-# .github/workflows/test.yml example
-- name: Run tests with Docker PostgreSQL
-  run: |
-    # CI environments are clean, so Docker will be created fresh
-    make test-all
-    # ✅ Optimal: No conflicts, fresh state, isolated tests
-```
-
-**Benefits for CI/CD:**
-- **No manual setup**: Automatic PostgreSQL management
-- **Fresh state**: Each CI run gets clean database
-- **Port conflict free**: Uses non-standard port (5433)
-- **Resource efficient**: Container recreation instead of data cleanup
-
-### Manual Docker Operations
-
-```bash
-# Manual container management
-docker run --name billing-postgres \
-  -e POSTGRES_PASSWORD=postgres \
-  -e POSTGRES_DB=billing_service_dev \
-  -p 5433:5432 -d postgres:15
-
-# Create test database manually
-docker exec billing-postgres psql -U postgres \
-  -c "CREATE DATABASE billing_service_test;"
-
-# Check container logs
-docker logs billing-postgres
-
-# Connect to PostgreSQL directly
-docker exec -it billing-postgres psql -U postgres -d billing_service_dev
-```
+- **Predictable**: Always uses localhost:5432
+- **Simple**: No Docker complexity to manage
+- **Fast**: Local PostgreSQL typically faster than containers
+- **Realistic**: Matches production PostgreSQL setup
+- **Clear**: No confusion about which PostgreSQL instance is used
 
 ## 🏛️ Domain Model
 

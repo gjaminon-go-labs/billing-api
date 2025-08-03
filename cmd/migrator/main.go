@@ -56,21 +56,37 @@ func run() error {
 		return fmt.Errorf("failed to load configuration: %w", err)
 	}
 
-	// Create migration service
+	// Create migration service using migration database configuration
 	migrationConfig := &migration.Config{
-		DatabaseURL:    appConfig.Database.Host, // We'll use the database URL from config
 		MigrationsPath: "database/migrations",
-		SchemaName:     appConfig.Database.Schema,
+		SchemaName:     appConfig.MigrationDatabase.Schema,
 	}
 
-	// Build proper database URL
+	// Use migration database if configured, fallback to main database for backward compatibility
+	dbConfig := appConfig.MigrationDatabase
+	if dbConfig.Host == "" || dbConfig.User == "" {
+		// Fallback to main database configuration
+		dbConfig = appConfig.Database
+		log.Println("⚠️  Using main database configuration for migrations (migration database not configured)")
+	} else {
+		log.Println("✅ Using dedicated migration database configuration")
+	}
+
+	// Build proper database URL for migration user
 	migrationConfig.DatabaseURL = fmt.Sprintf("postgresql://%s:%s@%s:%d/%s?sslmode=%s",
-		appConfig.Database.User,
-		appConfig.Database.Password,
-		appConfig.Database.Host,
-		appConfig.Database.Port,
-		appConfig.Database.DBName,
-		appConfig.Database.SSLMode)
+		dbConfig.User,
+		dbConfig.Password,
+		dbConfig.Host,
+		dbConfig.Port,
+		dbConfig.DBName,
+		dbConfig.SSLMode)
+	
+	if dbConfig.Schema != "" {
+		migrationConfig.DatabaseURL += "&search_path=" + dbConfig.Schema
+	}
+	
+	log.Printf("🔧 Database URL: %s", migrationConfig.DatabaseURL)
+	log.Printf("🔧 Schema: %s", migrationConfig.SchemaName)
 
 	migrationService, err := migration.NewService(migrationConfig)
 	if err != nil {

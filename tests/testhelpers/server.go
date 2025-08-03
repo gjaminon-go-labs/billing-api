@@ -1,12 +1,19 @@
 // Test Helpers with Dependency Injection
 //
-// This file provides test helpers using the DI container for optimal performance.
-// Provides: DI-based test server creation, singleton management, performance optimization
-// Benefits: Memory efficient, thread-safe, reusable dependencies, easy configuration
-// Pattern: Uses Kubernetes-style DI container with lazy initialization
+// This file provides test helpers with clear separation of storage types:
+// - Unit Tests: Always use in-memory storage (NewUnitTestServer, NewUnitTestStack)
+// - Integration Tests: Always use PostgreSQL storage (NewIntegrationTestServer, NewIntegrationTestStack)
+//
+// IMPORTANT: Integration tests require local PostgreSQL running on localhost:5432
+// with databases: billing_service_dev, billing_service_test
+//
+// Benefits: Memory efficient, thread-safe, clear storage separation, predictable behavior
+// Pattern: Uses DI container with lazy initialization and storage type enforcement
 package testhelpers
 
 import (
+	"fmt"
+	
 	"github.com/gjaminon-go-labs/billing-api/internal/application"
 	"github.com/gjaminon-go-labs/billing-api/internal/di"
 	"github.com/gjaminon-go-labs/billing-api/internal/domain/repository"
@@ -81,6 +88,18 @@ func NewIntegrationTestContainer() *di.Container {
 // NewIntegrationTestServer creates an HTTP server using PostgreSQL for integration tests
 func NewIntegrationTestServer() *httpserver.Server {
 	container := NewIntegrationTestContainer()
+	config := container.GetConfig()
+	
+	// Clean up test data if enabled in configuration
+	if config.TestCleanupEnabled && config.TestCleanupOnSetup {
+		stack := createTestStack(container)
+		if stack.DatabaseCleaner != nil {
+			if err := stack.DatabaseCleaner.CleanupTestData(); err != nil {
+				panic("Failed to cleanup test data: " + err.Error())
+			}
+		}
+	}
+	
 	server, err := container.GetHTTPServer()
 	if err != nil {
 		panic("Failed to create integration test server: " + err.Error())
@@ -123,6 +142,7 @@ type TestStack struct {
 	ClientRepo     repository.ClientRepository
 	BillingService *application.BillingService
 	HTTPServer     *httpserver.Server
+	DatabaseCleaner *DatabaseCleaner  // Added for test data cleanup
 }
 
 // NewUnitTestStack creates a complete unit test stack using DI container
@@ -152,13 +172,26 @@ func NewIsolatedTestStack() *TestStack {
 // NewIntegrationTestStack creates a complete integration test stack using PostgreSQL
 func NewIntegrationTestStack() *TestStack {
 	container := NewIntegrationTestContainer()
-	return createTestStack(container)
+	config := container.GetConfig()
+	
+	stack := createTestStack(container)
+	
+	// Clean up test data if enabled in configuration
+	if config.TestCleanupEnabled && config.TestCleanupOnSetup {
+		if stack.DatabaseCleaner != nil {
+			if err := stack.DatabaseCleaner.CleanupTestData(); err != nil {
+				panic("Failed to cleanup test data: " + err.Error())
+			}
+		}
+	}
+	
+	return stack
 }
 
 // createTestStack is a helper function to create a TestStack from a container
 func createTestStack(container *di.Container) *TestStack {
 	// Get all components from container (lazy initialization)
-	storage, err := container.GetStorage()
+	stor, err := container.GetStorage()
 	if err != nil {
 		panic("Failed to get storage: " + err.Error())
 	}
@@ -178,12 +211,23 @@ func createTestStack(container *di.Container) *TestStack {
 		panic("Failed to get HTTP server: " + err.Error())
 	}
 	
+	// Create database cleaner if using PostgreSQL storage
+	var dbCleaner *DatabaseCleaner
+	if postgresStorage, ok := stor.(*storage.PostgreSQLStorage); ok {
+		// Get the underlying GORM DB from PostgreSQL storage
+		db := postgresStorage.GetDB()
+		if db != nil {
+			dbCleaner = NewDatabaseCleaner(db)
+		}
+	}
+	
 	return &TestStack{
-		Container:      container,
-		Storage:        storage,
-		ClientRepo:     clientRepo,
-		BillingService: billingService,
-		HTTPServer:     httpServer,
+		Container:       container,
+		Storage:         stor,
+		ClientRepo:      clientRepo,
+		BillingService:  billingService,
+		HTTPServer:      httpServer,
+		DatabaseCleaner: dbCleaner,
 	}
 }
 
@@ -219,4 +263,64 @@ func WithIsolatedDependencies() *httpserver.Server {
 // Use for integration tests that need to test real database behavior
 func WithIntegrationDependencies() *httpserver.Server {
 	return NewIntegrationTestServer()
+}
+
+// NewCleanIntegrationTestServer creates an HTTP server with clean database state
+// This function automatically cleans up test data before returning the server
+func NewCleanIntegrationTestServer() *httpserver.Server {
+	stack := NewIntegrationTestStack()
+	
+	// Clean up any existing test data
+	if stack.DatabaseCleaner != nil {
+		if err := stack.DatabaseCleaner.CleanupTestData(); err != nil {
+			panic("Failed to cleanup test data: " + err.Error())
+		}
+	}
+	
+	return stack.HTTPServer
+}
+
+// NewCleanIntegrationTestStack creates a complete integration test stack with clean database
+// This function automatically cleans up test data before returning the stack
+func NewCleanIntegrationTestStack() *TestStack {
+	stack := NewIntegrationTestStack()
+	
+	// Clean up any existing test data
+	if stack.DatabaseCleaner != nil {
+		if err := stack.DatabaseCleaner.CleanupTestData(); err != nil {
+			panic("Failed to cleanup test data: " + err.Error())
+		}
+	}
+	
+	return stack
+}
+
+// NewIntegrationTestServerNoCleanup creates an integration test server without automatic cleanup
+// Use this for debugging when you need to inspect test data between runs
+func NewIntegrationTestServerNoCleanup() *httpserver.Server {
+	container := NewIntegrationTestContainer()
+	server, err := container.GetHTTPServer()
+	if err != nil {
+		panic("Failed to create integration test server: " + err.Error())
+	}
+	return server
+}
+
+// NewIntegrationTestStackNoCleanup creates an integration test stack without automatic cleanup
+// Use this for debugging when you need to inspect test data between runs
+func NewIntegrationTestStackNoCleanup() *TestStack {
+	container := NewIntegrationTestContainer()
+	return createTestStack(container)
+}
+
+// CleanupIntegrationTestData provides a standalone cleanup function
+// Use this in test setup/teardown when you need manual control over cleanup timing
+func CleanupIntegrationTestData() error {
+	stack := NewIntegrationTestStackNoCleanup()
+	
+	if stack.DatabaseCleaner == nil {
+		return fmt.Errorf("database cleaner not available - not using PostgreSQL storage")
+	}
+	
+	return stack.DatabaseCleaner.CleanupTestData()
 }

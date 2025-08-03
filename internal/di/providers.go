@@ -86,10 +86,21 @@ func createPostgreSQLStorage(config *ContainerConfig) (storage.Storage, error) {
 
 // runMigrations runs database migrations if enabled
 func runMigrations(config *ContainerConfig) error {
+	// Use migration database URL if available, fallback to main database URL for backward compatibility
+	databaseURL := config.MigrationDatabaseURL
+	if databaseURL == "" {
+		databaseURL = config.DatabaseURL
+	}
+	
+	schema := config.MigrationDatabaseSchema
+	if schema == "" {
+		schema = config.DatabaseSchema
+	}
+	
 	migrationConfig := &migration.Config{
-		DatabaseURL:    config.DatabaseURL,
+		DatabaseURL:    databaseURL,
 		MigrationsPath: config.MigrationPath,
-		SchemaName:     config.DatabaseSchema,
+		SchemaName:     schema,
 	}
 	
 	migrationService, err := migration.NewService(migrationConfig)
@@ -112,10 +123,21 @@ func MigrationServiceProvider(config *ContainerConfig) (*migration.Service, erro
 		return nil, fmt.Errorf("migrations are disabled in configuration")
 	}
 	
+	// Use migration database URL if available, fallback to main database URL for backward compatibility
+	databaseURL := config.MigrationDatabaseURL
+	if databaseURL == "" {
+		databaseURL = config.DatabaseURL
+	}
+	
+	schema := config.MigrationDatabaseSchema
+	if schema == "" {
+		schema = config.DatabaseSchema
+	}
+	
 	migrationConfig := &migration.Config{
-		DatabaseURL:    config.DatabaseURL,
+		DatabaseURL:    databaseURL,
 		MigrationsPath: config.MigrationPath,
-		SchemaName:     config.DatabaseSchema,
+		SchemaName:     schema,
 	}
 	
 	service, err := migration.NewService(migrationConfig)

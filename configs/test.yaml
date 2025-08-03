@@ -10,16 +10,26 @@ migration:
   enabled: true
   auto_migrate: true
 
-# Test database configuration
+# Test database configuration - shared application database
 database:
   host: "localhost"
-  port: 5433  # Docker PostgreSQL port to avoid conflicts with local PostgreSQL
-  user: "postgres"
-  password: "postgres"
-  dbname: "billing_service_test"
-  schema: "billing"
+  port: 5432  # Standard PostgreSQL port - requires local PostgreSQL installation
+  user: "billing_app_tst_user"        # Application user for runtime (DML only)
+  password: "billing_app_tst_2025"    # Application user password
+  dbname: "go-labs-tst"               # Shared application database
+  schema: "billing"                   # Service-specific schema
   sslmode: "disable"
   log_level: "error" # Minimal logging during tests
+
+# Migration database configuration (for schema changes)
+migration_database:
+  host: "localhost"
+  port: 5432
+  user: "billing_migration_tst_user"  # Migration user for DDL operations
+  password: "billing_migration_tst_2025" # Migration user password
+  dbname: "go-labs-tst"               # Same database, different user
+  schema: "billing"                   # Service-specific schema
+  sslmode: "disable"
 
 # Test logging (minimal for clean test output)
 logging:

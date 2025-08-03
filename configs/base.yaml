@@ -23,10 +23,10 @@ server:
 database:
   host: "localhost"
   port: 5432
-  user: "postgres"
-  password: "postgres"
-  dbname: "billing_service"
-  schema: "billing"
+  user: "billing_app_dev_user"     # Application user for runtime
+  password: "billing_app_dev_2025" # Will be overridden by environment
+  dbname: "go-labs-dev"            # Shared application database
+  schema: "billing"                # Service-specific schema
   sslmode: "disable"
 
   # Connection pool settings

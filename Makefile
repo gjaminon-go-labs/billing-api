@@ -1,93 +1,112 @@
-# Makefile for billing-service
+# Makefile for billing-api
 
 .DEFAULT_GOAL := help
 
 help:
 	@echo "Available commands:"
+	@echo "  dev-setup        - Setup development environment (provision databases)"
+	@echo "  test-setup       - Setup test environment (provision test database)"
 	@echo "  restore          - Install/update package dependencies"
-	@echo "  test-unit        - Run unit tests only (in-memory storage)"
-	@echo "  test-integration - Run integration tests only (PostgreSQL test DB)"
-	@echo "  test-all         - Run all tests (smart: fresh Docker or existing local PostgreSQL)"
-	@echo "  check-postgres   - Check PostgreSQL status, recreate Docker for test isolation"
-	@echo "  test-setup       - Set up PostgreSQL test environment"
-	@echo "  migrate-up       - Run all pending database migrations"
-	@echo "  migrate-down     - Roll back one database migration"
-	@echo "  migrate-status   - Show current migration status"
+	@echo "  test-unit        - Run unit tests only (domain layer validation)"
+	@echo "  test-integration - Run integration tests only (requires local PostgreSQL)"
+	@echo "  test-all         - Run all tests (unit + integration)"
+	@echo "  migrate-up       - Run all pending database migrations (dev environment)"
+	@echo "  migrate-down     - Roll back one database migration (dev environment)"
+	@echo "  migrate-status   - Show current migration status (dev environment)"
 	@echo "  migrate-reset    - Reset database migrations (development only)"
 	@echo "  run-dev          - Run application in development mode"
-	@echo "  run-prod         - Run application in production mode"
+	@echo "  build            - Build application binaries"
+	@echo "  clean            - Clean build artifacts"
+	@echo "  validate-env     - Validate environment setup (databases, infrastructure)"
 	@echo ""
-	@echo "Docker PostgreSQL commands:"
-	@echo "  docker-up        - Start PostgreSQL container (port 5433)"
-	@echo "  docker-down      - Stop PostgreSQL container"
-	@echo "  recreate-docker-postgres - Recreate container for fresh state"
-	@echo "  dev-setup        - Docker + migrations for development"
+	@echo "Prerequisites:"
+	@echo "  - PostgreSQL running on localhost:5432"
+	@echo "  - Databases: go-labs-dev, go-labs-tst (use 'make dev-setup' to provision)"
+	@echo "  - Infrastructure: ../infrastructure/scripts/provision-database.sh"
+
+# Infrastructure setup commands
+dev-setup:
+	@echo "Setting up development environment..."
+	@echo "1. Provisioning development database (go-labs-dev)..."
+	@if [ ! -f "../infrastructure/scripts/provision-database.sh" ]; then \
+		echo "❌ Error: Infrastructure script not found at ../infrastructure/scripts/provision-database.sh"; \
+		echo "   Please ensure you're in the billing-api directory and infrastructure project exists"; \
+		exit 1; \
+	fi
+	@cd ../infrastructure && ./scripts/provision-database.sh dev
+	@echo "2. Running development database migrations..."
+	$(MAKE) migrate-up
+	@echo "✅ Development environment setup complete!"
 	@echo ""
-	@echo "Environment variables:"
-	@echo "  DOCKER_DB_PORT   - PostgreSQL port for Docker (default: 5433)"
+	@echo "You can now:"
+	@echo "  - Run tests: make test-all"
+	@echo "  - Start API: make run-dev"
+
+test-setup:
+	@echo "Setting up test environment..."
+	@echo "1. Provisioning test database (go-labs-tst)..."
+	@if [ ! -f "../infrastructure/scripts/provision-database.sh" ]; then \
+		echo "❌ Error: Infrastructure script not found at ../infrastructure/scripts/provision-database.sh"; \
+		echo "   Please ensure you're in the billing-api directory and infrastructure project exists"; \
+		exit 1; \
+	fi
+	@cd ../infrastructure && ./scripts/provision-database.sh tst
+	@echo "2. Test database setup complete!"
+	@echo "✅ Test environment ready (migrations run automatically during integration tests)"
 
 restore:
 	go mod tidy
 
 test-unit:
-	@echo "Running unit tests (domain layer only)..."
+	@echo "Running unit tests (domain layer validation)..."
 	go test -v ./tests/unit/...
 
 test-integration:
-	@echo "Running integration tests..."
+	@echo "Running integration tests (requires local PostgreSQL)..."
+	@echo "Checking PostgreSQL connectivity..."
+	@if ! command -v psql >/dev/null 2>&1; then \
+		echo "❌ Error: psql command not found. Please install PostgreSQL client."; \
+		exit 1; \
+	fi
+	@if ! PGPASSWORD=postgres psql -h localhost -p 5432 -U postgres -d go-labs-tst -c "SELECT 1;" >/dev/null 2>&1; then \
+		echo "❌ Error: Cannot connect to PostgreSQL at localhost:5432 or database 'go-labs-tst' does not exist"; \
+		echo "   Please ensure:"; \
+		echo "   1. PostgreSQL is running locally"; \
+		echo "   2. Database 'go-labs-tst' exists (run 'make test-setup' to create)"; \
+		echo "   3. Connection credentials are correct (postgres/postgres)"; \
+		echo "   4. Test database migrations are up to date (run 'make migrate-up-test')"; \
+		exit 1; \
+	fi
 	go test -v ./tests/integration/...
 
-# Check PostgreSQL availability and ensure fresh Docker container for tests
-check-postgres:
-	@echo "🔍 Checking PostgreSQL status on port $(DOCKER_DB_PORT)..."
-	@if command -v docker >/dev/null 2>&1; then \
-		if docker ps --format "{{.Names}}" 2>/dev/null | grep -q "^billing-postgres$$"; then \
-			echo "🔄 Docker PostgreSQL container found - recreating for fresh test isolation..."; \
-			$(MAKE) recreate-docker-postgres; \
-		elif command -v nc >/dev/null 2>&1 && nc -z localhost $(DOCKER_DB_PORT) 2>/dev/null; then \
-			echo "✅ Local PostgreSQL detected on port $(DOCKER_DB_PORT) - using existing instance"; \
-		elif command -v timeout >/dev/null 2>&1 && timeout 1 bash -c "</dev/tcp/localhost/$(DOCKER_DB_PORT)" 2>/dev/null; then \
-			echo "✅ Local PostgreSQL detected on port $(DOCKER_DB_PORT) - using existing instance"; \
-		else \
-			echo "🐘 No PostgreSQL found - creating fresh Docker container..."; \
-			$(MAKE) docker-up; \
-		fi \
-	else \
-		echo "⚠️  Docker not available. Please ensure PostgreSQL is running on port $(DOCKER_DB_PORT)"; \
-		echo "   Or install Docker to use automated PostgreSQL setup"; \
-	fi
+test-all:
+	@echo "Running all tests (unit + integration)..."
+	$(MAKE) test-unit
+	$(MAKE) test-integration
 
-test-all: check-postgres
-	@echo "🧪 Running all tests (unit + integration)..."
-	go test -v ./tests/unit/... ./tests/integration/...
-
-# Migration commands
+# Migration commands (default to development environment)
 migrate-up:
-	@echo "Running all pending database migrations..."
-	go run cmd/migrator/main.go up
+	@echo "Running all pending database migrations (development)..."
+	ENVIRONMENT=development go run cmd/migrator/main.go up
 
 migrate-down:
-	@echo "Rolling back one database migration..."
-	go run cmd/migrator/main.go down
+	@echo "Rolling back one database migration (development)..."
+	ENVIRONMENT=development go run cmd/migrator/main.go down
 
 migrate-status:
-	@echo "Checking migration status..."
-	go run cmd/migrator/main.go status
+	@echo "Checking migration status (development)..."
+	ENVIRONMENT=development go run cmd/migrator/main.go status
 
 migrate-reset:
 	@echo "⚠️  WARNING: This will reset all migrations (development only)"
 	@echo "This command should only be used in development environments"
-	go run cmd/migrator/main.go force 0
-	go run cmd/migrator/main.go up
+	ENVIRONMENT=development go run cmd/migrator/main.go force 0
+	ENVIRONMENT=development go run cmd/migrator/main.go up
 
 # Application commands  
 run-dev:
 	@echo "Starting application in development mode..."
 	ENVIRONMENT=development go run cmd/api/main.go
-
-run-prod:
-	@echo "Starting application in production mode..."
-	ENVIRONMENT=production go run cmd/api/main.go
 
 # Build commands
 build:
@@ -95,51 +114,41 @@ build:
 	go build -o bin/api cmd/api/main.go
 	go build -o bin/migrator cmd/migrator/main.go
 
+# Validation and utility commands
+validate-env:
+	@echo "Validating environment setup..."
+	@echo "1. Checking PostgreSQL connectivity..."
+	@if ! command -v psql >/dev/null 2>&1; then \
+		echo "❌ PostgreSQL client not found"; \
+		exit 1; \
+	fi
+	@if ! PGPASSWORD=postgres psql -h localhost -p 5432 -U postgres -c "SELECT version();" >/dev/null 2>&1; then \
+		echo "❌ Cannot connect to PostgreSQL"; \
+		exit 1; \
+	fi
+	@echo "✅ PostgreSQL connectivity OK"
+	@echo "2. Checking development database..."
+	@if ! PGPASSWORD=postgres psql -h localhost -p 5432 -U postgres -d go-labs-dev -c "SELECT 1;" >/dev/null 2>&1; then \
+		echo "❌ Development database (go-labs-dev) not found - run 'make dev-setup'"; \
+		exit 1; \
+	fi
+	@echo "✅ Development database OK"
+	@echo "3. Checking test database..."
+	@if ! PGPASSWORD=postgres psql -h localhost -p 5432 -U postgres -d go-labs-tst -c "SELECT 1;" >/dev/null 2>&1; then \
+		echo "❌ Test database (go-labs-tst) not found - run 'make test-setup'"; \
+		exit 1; \
+	fi
+	@echo "✅ Test database OK"
+	@echo "4. Checking infrastructure scripts..."
+	@if [ ! -f "../infrastructure/scripts/provision-database.sh" ]; then \
+		echo "❌ Infrastructure script not found"; \
+		exit 1; \
+	fi
+	@echo "✅ Infrastructure scripts OK"
+	@echo "🎉 Environment validation complete - all systems ready!"
+
 clean:
 	@echo "Cleaning build artifacts..."
 	rm -rf bin/
 
-# Docker commands (when PostgreSQL is available)
-# Set DOCKER_DB_PORT environment variable to use a different port (default: 5433)
-DOCKER_DB_PORT ?= 5433
-
-docker-up:
-	@echo "Starting PostgreSQL with Docker on port $(DOCKER_DB_PORT) (avoids conflicts with local PostgreSQL)..."
-	docker run --name billing-postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=billing_service_dev -p $(DOCKER_DB_PORT):5432 -d postgres:15
-	@echo "Waiting for PostgreSQL to be ready..."
-	sleep 5
-	@echo "Creating test database..."
-	docker exec billing-postgres psql -U postgres -c "CREATE DATABASE billing_service_test;" || true
-
-docker-down:
-	@echo "Stopping PostgreSQL container..."
-	docker stop billing-postgres || true
-	docker rm billing-postgres || true
-
-# Recreate Docker PostgreSQL for fresh state (integration test isolation)
-recreate-docker-postgres:
-	@echo "🔄 Recreating Docker PostgreSQL for fresh database state..."
-	@echo "🗑️  Removing existing container..."
-	$(MAKE) docker-down
-	@echo "🐘 Creating fresh PostgreSQL container..."
-	$(MAKE) docker-up
-	@echo "✅ Fresh PostgreSQL container ready for testing"
-
-# Test-specific commands
-test-setup: docker-up
-	@echo "Setting up test databases..."
-	$(MAKE) migrate-up
-	ENVIRONMENT=test go run cmd/migrator/main.go up
-	@echo "Test environment ready!"
-
-# Development workflow
-dev-setup: docker-up
-	@echo "Waiting for PostgreSQL to be ready..."
-	sleep 5
-	$(MAKE) migrate-up
-	@echo "Development environment ready!"
-
-dev-teardown: docker-down clean
-	@echo "Development environment cleaned up!"
-
-.PHONY: help restore test-unit test-integration test-all check-postgres recreate-docker-postgres migrate-up migrate-down migrate-status migrate-reset run-dev run-prod build clean docker-up docker-down dev-setup dev-teardown test-setup
+.PHONY: help dev-setup test-setup restore test-unit test-integration test-all migrate-up migrate-down migrate-status migrate-reset run-dev build clean validate-env

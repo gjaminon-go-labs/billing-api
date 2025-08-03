@@ -241,41 +241,6 @@ psql -U postgres -d billing_service_dev -c "SELECT version();"
 make migrate-reset
 ```
 
-## File Organization
-
-```
-tests/
-├── unit/                    # Unit tests (memory storage)
-│   ├── domain/             # Domain logic tests
-│   └── application/        # Application service tests
-├── integration/            # Integration tests (PostgreSQL storage)
-│   ├── api/               # API integration tests
-│   ├── application/       # Application integration tests
-│   └── http/              # HTTP server integration tests
-├── testhelpers/           # Test bootstrap helpers
-└── testdata/              # External test data files
-```
-
-## Configuration Examples
-
-### Unit Test Example
-```go
-func TestClientCreation(t *testing.T) {
-    // Uses memory storage automatically
-    server := testhelpers.NewUnitTestServer()
-    // ... test logic
-}
-```
-
-### Integration Test Example  
-```go
-func TestClientCreationWithDatabase(t *testing.T) {
-    // Uses PostgreSQL test database automatically
-    server := testhelpers.NewIntegrationTestServer()
-    // ... test logic that verifies real database behavior
-}
-```
-
 ## Comparison: Before vs After
 
 ### Before (Complex)
@@ -311,6 +276,23 @@ The key is that it's your choice, not managed by the project.
 
 ### Q: Performance impact of removing Docker recreation?
 **A**: Local PostgreSQL is typically faster than Docker. Test isolation is maintained through the dedicated test database and auto-migration.
+
+## Migration Path
+
+### Phase 1: Update Documentation ✅
+- Create this simplified testing strategy document
+
+### Phase 2: Simplify Makefile
+- Remove Docker commands and smart detection logic
+- Keep only essential commands
+
+### Phase 3: Enforce Storage Types
+- Update test helpers to enforce PostgreSQL for integration tests
+- Remove deprecated/confusing helper methods
+
+### Phase 4: Update Main Documentation
+- Update README.md with new approach
+- Replace old TEST_STRATEGY.md with this document
 
 ---
 

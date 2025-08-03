@@ -19,16 +19,17 @@ import (
 
 // Config represents the complete application configuration
 type Config struct {
-	Storage   StorageConfig   `yaml:"storage"`
-	Migration MigrationConfig `yaml:"migration"`
-	Server    ServerConfig    `yaml:"server"`
-	Database  DatabaseConfig  `yaml:"database"`
-	Logging   LoggingConfig   `yaml:"logging"`
-	API       APIConfig       `yaml:"api"`
-	RateLimit RateLimitConfig `yaml:"rate_limit"`
-	Health    HealthConfig    `yaml:"health"`
-	Metrics   MetricsConfig   `yaml:"metrics"`
-	Tracing   TracingConfig   `yaml:"tracing"`
+	Storage           StorageConfig   `yaml:"storage"`
+	Migration         MigrationConfig `yaml:"migration"`
+	Server            ServerConfig    `yaml:"server"`
+	Database          DatabaseConfig  `yaml:"database"`
+	MigrationDatabase DatabaseConfig  `yaml:"migration_database"`
+	Logging           LoggingConfig   `yaml:"logging"`
+	API               APIConfig       `yaml:"api"`
+	RateLimit         RateLimitConfig `yaml:"rate_limit"`
+	Health            HealthConfig    `yaml:"health"`
+	Metrics           MetricsConfig   `yaml:"metrics"`
+	Tracing           TracingConfig   `yaml:"tracing"`
 }
 
 // StorageConfig defines storage configuration
@@ -224,6 +225,25 @@ func applyEnvironmentVariables(config *Config) {
 		config.Database.DBName = dbName
 	}
 
+	// Migration database configuration (Kubernetes secrets)
+	if migrationDbHost := os.Getenv("MIGRATION_DB_HOST"); migrationDbHost != "" {
+		config.MigrationDatabase.Host = migrationDbHost
+	}
+	if migrationDbPort := os.Getenv("MIGRATION_DB_PORT"); migrationDbPort != "" {
+		if p, err := strconv.Atoi(migrationDbPort); err == nil {
+			config.MigrationDatabase.Port = p
+		}
+	}
+	if migrationDbUser := os.Getenv("MIGRATION_DB_USER"); migrationDbUser != "" {
+		config.MigrationDatabase.User = migrationDbUser
+	}
+	if migrationDbPassword := os.Getenv("MIGRATION_DB_PASSWORD"); migrationDbPassword != "" {
+		config.MigrationDatabase.Password = migrationDbPassword
+	}
+	if migrationDbName := os.Getenv("MIGRATION_DB_NAME"); migrationDbName != "" {
+		config.MigrationDatabase.DBName = migrationDbName
+	}
+
 	// Storage configuration
 	if storageType := os.Getenv("STORAGE_TYPE"); storageType != "" {
 		config.Storage.Type = storageType
@@ -278,6 +298,38 @@ func mergeConfigs(target, source *Config) {
 	}
 	if source.Database.DBName != "" {
 		target.Database.DBName = source.Database.DBName
+	}
+	if source.Database.User != "" {
+		target.Database.User = source.Database.User
+	}
+	if source.Database.Password != "" {
+		target.Database.Password = source.Database.Password
+	}
+	if source.Database.Schema != "" {
+		target.Database.Schema = source.Database.Schema
+	}
+	
+	// Migration database config
+	if source.MigrationDatabase.Host != "" {
+		target.MigrationDatabase.Host = source.MigrationDatabase.Host
+	}
+	if source.MigrationDatabase.Port != 0 {
+		target.MigrationDatabase.Port = source.MigrationDatabase.Port
+	}
+	if source.MigrationDatabase.DBName != "" {
+		target.MigrationDatabase.DBName = source.MigrationDatabase.DBName
+	}
+	if source.MigrationDatabase.User != "" {
+		target.MigrationDatabase.User = source.MigrationDatabase.User
+	}
+	if source.MigrationDatabase.Password != "" {
+		target.MigrationDatabase.Password = source.MigrationDatabase.Password
+	}
+	if source.MigrationDatabase.Schema != "" {
+		target.MigrationDatabase.Schema = source.MigrationDatabase.Schema
+	}
+	if source.MigrationDatabase.SSLMode != "" {
+		target.MigrationDatabase.SSLMode = source.MigrationDatabase.SSLMode
 	}
 	
 	// Logging config
