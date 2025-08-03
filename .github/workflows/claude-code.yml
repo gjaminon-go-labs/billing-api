@@ -10,8 +10,8 @@ on:
 
 jobs:
   claude-response:
-    # Only run if the comment contains @claude
-    if: contains(github.event.comment.body, '@claude')
+    # Only run if the comment contains @claude and is on a PR
+    if: contains(github.event.comment.body, '@claude') && github.event.issue.pull_request
     runs-on: ubuntu-latest
     
     permissions:
@@ -20,6 +20,17 @@ jobs:
       issues: write          # Comment on issues
       
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Checkout PR branch
+        run: gh pr checkout ${{ github.event.issue.number }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        
       - name: Claude Code Action
         uses: anthropics/claude-code-action@beta
         with:
