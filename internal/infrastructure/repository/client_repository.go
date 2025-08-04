@@ -2,10 +2,11 @@ package repository
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	
 	"github.com/gjaminon-go-labs/billing-api/internal/domain/entity"
-	"github.com/gjaminon-go-labs/billing-api/internal/domain/errors"
+	domainErrors "github.com/gjaminon-go-labs/billing-api/internal/domain/errors"
 	"github.com/gjaminon-go-labs/billing-api/internal/domain/repository"
 	"github.com/gjaminon-go-labs/billing-api/internal/infrastructure/storage"
 )
@@ -28,9 +29,9 @@ func (r *ClientRepositoryImpl) Save(client *entity.Client) error {
 	err := r.storage.Store(client.ID(), client)
 	if err != nil {
 		// Wrap storage error with repository context
-		return errors.NewRepositoryError(
+		return domainErrors.NewRepositoryError(
 			"save_client",
-			errors.RepositoryInternal,
+			domainErrors.RepositoryInternal,
 			"failed to save client",
 			err,
 		)
@@ -43,9 +44,9 @@ func (r *ClientRepositoryImpl) GetAll() ([]*entity.Client, error) {
 	// Get all values from storage
 	values, err := r.storage.ListAll()
 	if err != nil {
-		return nil, errors.NewRepositoryError(
+		return nil, domainErrors.NewRepositoryError(
 			"get_all_clients",
-			errors.RepositoryInternal,
+			domainErrors.RepositoryInternal,
 			"failed to retrieve all clients",
 			err,
 		)
@@ -64,9 +65,9 @@ func (r *ClientRepositoryImpl) GetAll() ([]*entity.Client, error) {
 		if clientMap, ok := value.(map[string]interface{}); ok {
 			client, err := r.deserializeClient(clientMap)
 			if err != nil {
-				return nil, errors.NewRepositoryError(
+				return nil, domainErrors.NewRepositoryError(
 					"deserialize_client",
-					errors.RepositoryInternal,
+					domainErrors.RepositoryInternal,
 					"failed to deserialize client",
 					err,
 				)
@@ -93,4 +94,70 @@ func (r *ClientRepositoryImpl) deserializeClient(clientMap map[string]interface{
 	}
 	
 	return &client, nil
+}
+
+// GetByID retrieves a client entity by ID
+func (r *ClientRepositoryImpl) GetByID(id string) (*entity.Client, error) {
+	// Get value from storage
+	value, err := r.storage.Get(id)
+	if err != nil {
+		// Check if it's a "not found" error using error wrapping
+		if errors.Is(err, storage.ErrKeyNotFound) {
+			return nil, domainErrors.ErrClientNotFound
+		}
+		
+		return nil, domainErrors.NewRepositoryError(
+			"get_client",
+			domainErrors.RepositoryInternal,
+			"failed to retrieve client",
+			err,
+		)
+	}
+	
+	// Try direct type assertion first (for in-memory storage)
+	if client, ok := value.(*entity.Client); ok {
+		return client, nil
+	}
+	
+	// Handle JSON deserialization (for PostgreSQL storage)
+	if clientMap, ok := value.(map[string]interface{}); ok {
+		client, err := r.deserializeClient(clientMap)
+		if err != nil {
+			return nil, domainErrors.NewRepositoryError(
+				"deserialize_client",
+				domainErrors.RepositoryInternal,
+				"failed to deserialize client",
+				err,
+			)
+		}
+		return client, nil
+	}
+	
+	return nil, domainErrors.NewRepositoryError(
+		"get_client",
+		domainErrors.RepositoryInternal,
+		"unexpected value type in storage",
+		nil,
+	)
+}
+
+// Delete removes a client entity by ID
+func (r *ClientRepositoryImpl) Delete(id string) error {
+	// Use storage Delete method
+	err := r.storage.Delete(id)
+	if err != nil {
+		// Check if it's a "not found" error using error wrapping
+		if errors.Is(err, storage.ErrKeyNotFound) {
+			return domainErrors.ErrClientNotFound
+		}
+		
+		return domainErrors.NewRepositoryError(
+			"delete_client",
+			domainErrors.RepositoryInternal,
+			"failed to delete client",
+			err,
+		)
+	}
+	
+	return nil
 }

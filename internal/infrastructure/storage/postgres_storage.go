@@ -71,7 +71,7 @@ func (s *PostgreSQLStorage) Get(key string) (interface{}, error) {
 	// Find record by key
 	if err := s.db.Where("key = ?", key).First(&record).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return nil, fmt.Errorf("key not found: %s", key)
+			return nil, fmt.Errorf("%w: %s", ErrKeyNotFound, key)
 		}
 		return nil, fmt.Errorf("failed to retrieve value for key %s: %w", key, err)
 	}
@@ -115,6 +115,23 @@ func (s *PostgreSQLStorage) ListAll() ([]interface{}, error) {
 	}
 	
 	return values, nil
+}
+
+// Delete removes a value by key
+func (s *PostgreSQLStorage) Delete(key string) error {
+	// Delete record by key
+	result := s.db.Where("key = ?", key).Delete(&StorageRecord{})
+	
+	if result.Error != nil {
+		return fmt.Errorf("failed to delete value for key %s: %w", key, result.Error)
+	}
+	
+	// Check if any record was actually deleted
+	if result.RowsAffected == 0 {
+		return fmt.Errorf("%w: %s", ErrKeyNotFound, key)
+	}
+	
+	return nil
 }
 
 // Health checks the health of the PostgreSQL connection

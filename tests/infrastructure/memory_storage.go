@@ -3,6 +3,8 @@ package infrastructure
 import (
 	"fmt"
 	"sync"
+
+	"github.com/gjaminon-go-labs/billing-api/internal/infrastructure/storage"
 )
 
 // InMemoryStorage provides an in-memory implementation of the Storage interface for testing
@@ -34,7 +36,7 @@ func (s *InMemoryStorage) Get(key string) (interface{}, error) {
 	
 	value, exists := s.data[key]
 	if !exists {
-		return nil, fmt.Errorf("key not found: %s", key)
+		return nil, fmt.Errorf("%w: %s", storage.ErrKeyNotFound, key)
 	}
 	
 	return value, nil
@@ -60,4 +62,17 @@ func (s *InMemoryStorage) ListAll() ([]interface{}, error) {
 	}
 	
 	return values, nil
+}
+
+// Delete removes a value by key
+func (s *InMemoryStorage) Delete(key string) error {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+	
+	if _, exists := s.data[key]; !exists {
+		return fmt.Errorf("%w: %s", storage.ErrKeyNotFound, key)
+	}
+	
+	delete(s.data, key)
+	return nil
 }

@@ -1,0 +1,51 @@
+[
+  {
+    "name": "Before Update State",
+    "description": "Client state before any updates",
+    "client": {
+      "id": "123e4567-e89b-12d3-a456-426614174000",
+      "name": "Alice Johnson",
+      "email": "alice.johnson@example.com",
+      "phone": "+1234567890",
+      "address": "123 Main Street, Anytown, ST 12345"
+    }
+  },
+  {
+    "name": "After Full Update State",
+    "description": "Client state after all fields updated",
+    "client": {
+      "id": "123e4567-e89b-12d3-a456-426614174000",
+      "name": "Alice Johnson Updated",
+      "email": "alice.johnson@example.com",
+      "phone": "+1987654321",
+      "address": "456 Oak Avenue, Newtown, ST 54321"
+    }
+  },
+  {
+    "name": "Multiple Clients for Update Testing",
+    "description": "Multiple clients for testing update scenarios",
+    "clients": [
+      {
+        "id": "123e4567-e89b-12d3-a456-426614174000",
+        "name": "Alice Johnson",
+        "email": "alice.johnson@example.com",
+        "phone": "+1234567890",
+        "address": "123 Main Street, Anytown, ST 12345"
+      },
+      {
+        "id": "223e4567-e89b-12d3-a456-426614174001",
+        "name": "Bob Smith",
+        "email": "bob.smith@example.com",
+        "phone": "+1987654321",
+        "address": "789 Oak Street, Different City, ST 54321"
+      },
+      {
+        "id": "323e4567-e89b-12d3-a456-426614174002",
+        "name": "Carol Davis",
+        "email": "carol.davis@example.com",
+        "phone": "",
+        "address": ""
+      }
+    ]
+  }
+]

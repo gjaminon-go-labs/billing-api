@@ -1,0 +1,101 @@
+[
+  {
+    "name": "Full Update Request",
+    "description": "Update all modifiable fields",
+    "request": {
+      "name": "Alice Johnson Updated",
+      "phone": "+1987654321",
+      "address": "456 Oak Avenue, Newtown, ST 54321"
+    },
+    "expected_client": {
+      "id": "123e4567-e89b-12d3-a456-426614174000",
+      "name": "Alice Johnson Updated",
+      "email": "alice.johnson@example.com",
+      "phone": "+1987654321",
+      "address": "456 Oak Avenue, Newtown, ST 54321"
+    }
+  },
+  {
+    "name": "Partial Update Request - Name Only",
+    "description": "Update only the client name",
+    "request": {
+      "name": "Alice Johnson-Smith",
+      "phone": "",
+      "address": ""
+    },
+    "expected_client": {
+      "id": "123e4567-e89b-12d3-a456-426614174000",
+      "name": "Alice Johnson-Smith",
+      "email": "alice.johnson@example.com",
+      "phone": "",
+      "address": ""
+    }
+  },
+  {
+    "name": "Partial Update Request - Phone and Address",
+    "description": "Update phone and address, keep name same",
+    "request": {
+      "name": "Alice Johnson",
+      "phone": "+1555444333",
+      "address": "789 Pine Street, Somewhere, ST 98765"
+    },
+    "expected_client": {
+      "id": "123e4567-e89b-12d3-a456-426614174000",
+      "name": "Alice Johnson",
+      "email": "alice.johnson@example.com",
+      "phone": "+1555444333",
+      "address": "789 Pine Street, Somewhere, ST 98765"
+    }
+  },
+  {
+    "name": "Invalid Update Requests",
+    "description": "Various invalid update scenarios",
+    "invalid_requests": [
+      {
+        "description": "Empty name",
+        "request": {
+          "name": "",
+          "phone": "+1234567890",
+          "address": "Valid address"
+        },
+        "expected_error": "name is required"
+      },
+      {
+        "description": "Name too short",
+        "request": {
+          "name": "A",
+          "phone": "+1234567890",
+          "address": "Valid address"
+        },
+        "expected_error": "name must be at least 2 characters"
+      },
+      {
+        "description": "Name too long",
+        "request": {
+          "name": "A very long name that exceeds the maximum allowed length of 100 characters for client names in system",
+          "phone": "+1234567890",
+          "address": "Valid address"
+        },
+        "expected_error": "name must not exceed 100 characters"
+      },
+      {
+        "description": "Invalid phone format",
+        "request": {
+          "name": "Valid Name",
+          "phone": "invalid-phone",
+          "address": "Valid address"
+        },
+        "expected_error": "phone number format is invalid"
+      },
+      {
+        "description": "Address too long",
+        "request": {
+          "name": "Valid Name",
+          "phone": "+1234567890",
+          "address": "A very long address that exceeds the maximum allowed length of 500 characters for client addresses in the system. This address is intentionally made very long to test the validation rules that ensure addresses do not exceed the database column limits and provide reasonable constraints for user interface elements and data storage efficiency in our billing management application. This extra text is added to make the address longer than 500 characters to properly test the validation logic. Additional padding text to ensure we exceed the 500 character limit for address validation testing purposes in our comprehensive test suite."
+        },
+        "expected_error": "address must not exceed 500 characters"
+      }
+    ]
+  }
+]

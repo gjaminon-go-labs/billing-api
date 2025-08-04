@@ -111,9 +111,21 @@ func (h *ClientHandler) handleDomainError(w http.ResponseWriter, err error) {
 	}
 
 	if errors.IsRepositoryError(err) {
-		code := string(errors.GetErrorCode(err))
+		code := errors.GetErrorCode(err)
 		message := errors.GetUserMessage(err)
-		h.writeErrorResponse(w, http.StatusInternalServerError, code, message, "")
+		
+		// Map specific repository error codes to appropriate HTTP status codes
+		var statusCode int
+		switch code {
+		case errors.RepositoryNotFound:
+			statusCode = http.StatusNotFound
+		case errors.RepositoryConstraint:
+			statusCode = http.StatusConflict
+		default:
+			statusCode = http.StatusInternalServerError
+		}
+		
+		h.writeErrorResponse(w, statusCode, string(code), message, "")
 		return
 	}
 
@@ -164,4 +176,56 @@ func (h *ClientHandler) writeErrorResponse(w http.ResponseWriter, statusCode int
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
 	json.NewEncoder(w).Encode(response)
+}
+
+// GetClient handles GET /clients/{id} requests
+func (h *ClientHandler) GetClient(w http.ResponseWriter, r *http.Request, clientID string) {
+	// Get client from service
+	client, err := h.billingService.GetClientByID(clientID)
+	if err != nil {
+		h.handleDomainError(w, err)
+		return
+	}
+
+	// Convert domain entity to response DTO
+	response := h.toClientResponse(client)
+
+	// Write success response
+	h.writeSuccessResponse(w, http.StatusOK, response)
+}
+
+// UpdateClient handles PUT /clients/{id} requests
+func (h *ClientHandler) UpdateClient(w http.ResponseWriter, r *http.Request, clientID string) {
+	// Parse request body
+	var req dtos.UpdateClientRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.writeErrorResponse(w, http.StatusBadRequest, "INVALID_JSON", "Invalid JSON format", "")
+		return
+	}
+
+	// Update client via service
+	client, err := h.billingService.UpdateClient(clientID, req)
+	if err != nil {
+		h.handleDomainError(w, err)
+		return
+	}
+
+	// Convert domain entity to response DTO
+	response := h.toClientResponse(client)
+
+	// Write success response
+	h.writeSuccessResponse(w, http.StatusOK, response)
+}
+
+// DeleteClient handles DELETE /clients/{id} requests
+func (h *ClientHandler) DeleteClient(w http.ResponseWriter, r *http.Request, clientID string) {
+	// Delete client via service
+	err := h.billingService.DeleteClient(clientID)
+	if err != nil {
+		h.handleDomainError(w, err)
+		return
+	}
+
+	// Write success response with no content
+	w.WriteHeader(http.StatusNoContent)
 }

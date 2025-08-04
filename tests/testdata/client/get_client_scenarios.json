@@ -1,0 +1,43 @@
+[
+  {
+    "name": "Valid Get Client Scenario",
+    "description": "Standard client retrieval with all fields populated",
+    "client": {
+      "id": "123e4567-e89b-12d3-a456-426614174000",
+      "name": "Alice Johnson",
+      "email": "alice.johnson@example.com",
+      "phone": "+1234567890",
+      "address": "123 Main Street, Anytown, ST 12345"
+    }
+  },
+  {
+    "name": "Minimal Get Client Scenario",
+    "description": "Client retrieval with only required fields",
+    "client": {
+      "id": "223e4567-e89b-12d3-a456-426614174001",
+      "name": "Bob Smith",
+      "email": "bob.smith@example.com",
+      "phone": "",
+      "address": ""
+    }
+  },
+  {
+    "name": "Invalid UUID Scenarios",
+    "description": "Various invalid UUID formats for testing validation",
+    "invalid_ids": [
+      "not-a-uuid",
+      "123",
+      "",
+      "123e4567-e89b-12d3-a456",
+      "123e4567-e89b-12d3-a456-426614174zzz"
+    ]
+  },
+  {
+    "name": "Non-existent Client IDs",
+    "description": "Valid UUID formats that don't exist in the database",
+    "non_existent_ids": [
+      "999e4567-e89b-12d3-a456-426614174999",
+      "888e4567-e89b-12d3-a456-426614174888"
+    ]
+  }
+]
