@@ -111,9 +111,21 @@ func (h *ClientHandler) handleDomainError(w http.ResponseWriter, err error) {
 	}
 
 	if errors.IsRepositoryError(err) {
-		code := string(errors.GetErrorCode(err))
+		code := errors.GetErrorCode(err)
 		message := errors.GetUserMessage(err)
-		h.writeErrorResponse(w, http.StatusInternalServerError, code, message, "")
+		
+		// Map specific repository error codes to appropriate HTTP status codes
+		var statusCode int
+		switch code {
+		case errors.RepositoryNotFound:
+			statusCode = http.StatusNotFound
+		case errors.RepositoryConstraint:
+			statusCode = http.StatusConflict
+		default:
+			statusCode = http.StatusInternalServerError
+		}
+		
+		h.writeErrorResponse(w, statusCode, string(code), message, "")
 		return
 	}
 

@@ -3,6 +3,7 @@ package application
 import (
 	"strings"
 	
+	"github.com/google/uuid"
 	"github.com/gjaminon-go-labs/billing-api/internal/api/http/dtos"
 	"github.com/gjaminon-go-labs/billing-api/internal/domain/entity"
 	"github.com/gjaminon-go-labs/billing-api/internal/domain/errors"
@@ -57,38 +58,10 @@ func (s *BillingService) GetClientByID(id string) (*entity.Client, error) {
 	return s.clientRepo.GetByID(id)
 }
 
-// isValidUUID performs basic UUID format validation
+// isValidUUID validates UUID format using the standard library
 func isValidUUID(id string) bool {
-	// Basic UUID format check (36 characters with dashes at positions 8, 13, 18, 23)
-	if len(id) != 36 {
-		return false
-	}
-	
-	// Check dash positions
-	if id[8] != '-' || id[13] != '-' || id[18] != '-' || id[23] != '-' {
-		return false
-	}
-	
-	// Check that other characters are hex digits
-	hexChars := "0123456789abcdefABCDEF"
-	for i, char := range id {
-		if i == 8 || i == 13 || i == 18 || i == 23 {
-			continue // Skip dash positions
-		}
-		
-		found := false
-		for _, hexChar := range hexChars {
-			if char == hexChar {
-				found = true
-				break
-			}
-		}
-		if !found {
-			return false
-		}
-	}
-	
-	return true
+	_, err := uuid.Parse(id)
+	return err == nil
 }
 
 // DeleteClient removes a client by ID
@@ -177,21 +150,33 @@ func validateUpdateRequest(req dtos.UpdateClientRequest) error {
 }
 
 // isValidPhoneFormat performs basic phone format validation
+// NOTE: For production use, consider using a dedicated phone validation library
+// like github.com/nyaruka/phonenumbers for comprehensive international format support
 func isValidPhoneFormat(phone string) bool {
 	// Basic check: starts with + and contains only digits, spaces, dashes, parentheses
 	if !strings.HasPrefix(phone, "+") {
 		return false
 	}
 	
-	// Check that it has at least 7 digits (minimum phone number length)
+	// Must have at least a country code (1-3 digits after +)
+	if len(phone) < 4 {
+		return false
+	}
+	
+	// Check that it has valid characters and digit count
 	digitCount := 0
-	for _, char := range phone {
+	for i, char := range phone {
 		if char >= '0' && char <= '9' {
 			digitCount++
-		} else if char != '+' && char != ' ' && char != '-' && char != '(' && char != ')' {
+		} else if i == 0 && char == '+' {
+			continue // Allow leading +
+		} else if char == ' ' || char == '-' || char == '(' || char == ')' || char == '.' {
+			continue // Allow common formatting characters
+		} else {
 			return false // Invalid character
 		}
 	}
 	
-	return digitCount >= 7 && digitCount <= 15 // International phone number range
+	// International phone number length range (E.164 standard allows 4-15 digits including country code)
+	return digitCount >= 4 && digitCount <= 15
 }

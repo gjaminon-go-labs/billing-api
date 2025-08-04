@@ -1,5 +1,10 @@
 package storage
 
+import "errors"
+
+// ErrKeyNotFound indicates that a requested key was not found in storage
+var ErrKeyNotFound = errors.New("key not found")
+
 // Storage defines the contract for data storage backends
 type Storage interface {
 	// Store saves a value with the given key
