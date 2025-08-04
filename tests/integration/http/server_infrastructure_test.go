@@ -30,6 +30,11 @@ import (
 	"github.com/gjaminon-go-labs/billing-api/tests/testhelpers"
 )
 
+// BUSINESS_TITLE: System Health Monitoring
+// BUSINESS_DESCRIPTION: Operations team and monitoring systems can check if the application is running properly and ready to serve customers
+// USER_STORY: As a system administrator, I want to monitor system health so that I can ensure the application is available for users
+// BUSINESS_VALUE: Enables proactive monitoring, prevents downtime, supports operational excellence and SLA compliance
+// SCENARIOS_TESTED: Health endpoint availability, proper status responses, monitoring system integration
 func TestHTTPServer_Integration_HealthCheck(t *testing.T) {
 	// Set up complete HTTP server using InMemory test helpers
 	server := testhelpers.NewInMemoryTestServer()
@@ -60,6 +65,11 @@ func TestHTTPServer_Integration_HealthCheck(t *testing.T) {
 	assert.Contains(t, healthResponse, "version")
 }
 
+// BUSINESS_TITLE: Cross-Domain API Access
+// BUSINESS_DESCRIPTION: Web applications from different domains can securely access the API, enabling integrations and third-party applications
+// USER_STORY: As a developer integrating with the API, I want to make requests from web applications without CORS errors
+// BUSINESS_VALUE: Enables API integrations, supports third-party development, allows flexible frontend deployment strategies
+// SCENARIOS_TESTED: CORS headers, preflight requests, cross-domain access security, API accessibility
 func TestHTTPServer_Integration_CORS(t *testing.T) {
 	// Set up complete HTTP server using InMemory test helpers
 	server := testhelpers.NewInMemoryTestServer()

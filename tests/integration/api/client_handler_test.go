@@ -44,6 +44,11 @@ type HTTPTestCase struct {
 	ExpectedErrorCode  string                  `json:"expected_error_code,omitempty"`
 }
 
+// BUSINESS_TITLE: Create New Client via API
+// BUSINESS_DESCRIPTION: Sales representatives and customer service agents can add new clients through the web interface, ensuring all client data is properly validated and stored
+// USER_STORY: As a sales representative, I want to create new client records through a web form so that I can organize and track my customer relationships
+// BUSINESS_VALUE: Enables customer onboarding, relationship management, and sales tracking. Critical for business growth and customer data organization
+// SCENARIOS_TESTED: Valid client creation, data validation (email format, required fields), error handling for invalid data, duplicate prevention
 func TestClientHandler_CreateClient(t *testing.T) {
 	// Load test data
 	testCases := loadHTTPTestCases(t)
@@ -110,6 +115,11 @@ func TestClientHandler_CreateClient(t *testing.T) {
 	}
 }
 
+// BUSINESS_TITLE: API Security - Method Validation
+// BUSINESS_DESCRIPTION: System prevents unauthorized API calls and ensures only proper HTTP methods are accepted for client creation
+// USER_STORY: As a system administrator, I want the API to reject invalid requests so that the application remains secure and stable
+// BUSINESS_VALUE: Protects against malicious requests, ensures API consistency, and maintains system security
+// SCENARIOS_TESTED: Invalid HTTP methods (PUT instead of POST), proper error messages, security boundaries
 func TestClientHandler_CreateClient_MethodNotAllowed(t *testing.T) {
 	// Set up integration test server with PostgreSQL storage
 	server := testhelpers.NewIntegrationTestServer()
@@ -133,6 +143,11 @@ func TestClientHandler_CreateClient_MethodNotAllowed(t *testing.T) {
 	assert.Equal(t, "METHOD_NOT_ALLOWED", responseBody.Error.Code)
 }
 
+// BUSINESS_TITLE: Data Validation - Invalid Request Format
+// BUSINESS_DESCRIPTION: System properly handles malformed data submissions and provides clear error messages to users
+// USER_STORY: As a user, I want to receive clear error messages when I submit invalid data so that I can correct my input
+// BUSINESS_VALUE: Prevents data corruption, improves user experience, reduces support requests
+// SCENARIOS_TESTED: Malformed JSON requests, clear error responses, graceful error handling
 func TestClientHandler_CreateClient_InvalidJSON(t *testing.T) {
 	// Set up integration test server with PostgreSQL storage
 	server := testhelpers.NewIntegrationTestServer()
