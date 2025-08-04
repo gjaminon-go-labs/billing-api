@@ -31,3 +31,8 @@ func (s *BillingService) CreateClient(name, email, phone, address string) (*enti
 	
 	return client, nil
 }
+
+// ListClients retrieves all clients from the repository
+func (s *BillingService) ListClients() ([]*entity.Client, error) {
+	return s.clientRepo.GetAll()
+}

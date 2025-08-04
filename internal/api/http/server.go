@@ -34,7 +34,7 @@ func (s *Server) SetupRoutes() http.Handler {
 	mux.HandleFunc("/health", s.healthHandler.Health)
 	
 	// API routes
-	mux.HandleFunc("/api/v1/clients", s.clientHandler.CreateClient)
+	mux.HandleFunc("/api/v1/clients", s.handleClientsRoute)
 
 	// Apply middleware chain
 	handler := s.errorHandler.RecoverMiddleware(mux)
@@ -42,6 +42,21 @@ func (s *Server) SetupRoutes() http.Handler {
 	handler = s.errorHandler.CORSMiddleware(handler)
 
 	return handler
+}
+
+// handleClientsRoute routes requests to the appropriate client handler based on HTTP method
+func (s *Server) handleClientsRoute(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodPost:
+		s.clientHandler.CreateClient(w, r)
+	case http.MethodGet:
+		s.clientHandler.ListClients(w, r)
+	default:
+		// Return method not allowed for unsupported methods
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		w.Write([]byte(`{"error":{"code":"METHOD_NOT_ALLOWED","message":"Method not allowed"},"success":false}`))
+	}
 }
 
 // Handler returns the configured HTTP handler

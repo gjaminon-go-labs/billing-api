@@ -95,6 +95,28 @@ func (s *PostgreSQLStorage) Exists(key string) bool {
 	return count > 0
 }
 
+// ListAll retrieves all stored values
+func (s *PostgreSQLStorage) ListAll() ([]interface{}, error) {
+	var records []StorageRecord
+	
+	// Find all records
+	if err := s.db.Find(&records).Error; err != nil {
+		return nil, fmt.Errorf("failed to retrieve all records: %w", err)
+	}
+	
+	// Deserialize all values
+	values := make([]interface{}, 0, len(records))
+	for _, record := range records {
+		var value interface{}
+		if err := json.Unmarshal([]byte(record.Value), &value); err != nil {
+			return nil, fmt.Errorf("failed to deserialize value for key %s: %w", record.Key, err)
+		}
+		values = append(values, value)
+	}
+	
+	return values, nil
+}
+
 // Health checks the health of the PostgreSQL connection
 func (s *PostgreSQLStorage) Health() error {
 	sqlDB, err := s.db.DB()

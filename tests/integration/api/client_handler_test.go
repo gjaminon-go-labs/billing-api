@@ -114,8 +114,8 @@ func TestClientHandler_CreateClient_MethodNotAllowed(t *testing.T) {
 	// Set up integration test server with PostgreSQL storage
 	server := testhelpers.NewIntegrationTestServer()
 
-	// Test GET method (should be method not allowed)
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/clients", nil)
+	// Test PUT method (should be method not allowed)
+	req := httptest.NewRequest(http.MethodPut, "/api/v1/clients", nil)
 	rr := httptest.NewRecorder()
 
 	server.Handler().ServeHTTP(rr, req)

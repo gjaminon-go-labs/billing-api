@@ -48,3 +48,16 @@ func (s *InMemoryStorage) Exists(key string) bool {
 	_, exists := s.data[key]
 	return exists
 }
+
+// ListAll retrieves all stored values
+func (s *InMemoryStorage) ListAll() ([]interface{}, error) {
+	s.mutex.RLock()
+	defer s.mutex.RUnlock()
+	
+	values := make([]interface{}, 0, len(s.data))
+	for _, value := range s.data {
+		values = append(values, value)
+	}
+	
+	return values, nil
+}

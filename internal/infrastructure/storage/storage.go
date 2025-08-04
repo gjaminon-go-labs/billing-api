@@ -10,4 +10,7 @@ type Storage interface {
 	
 	// Exists checks if a key exists in storage
 	Exists(key string) bool
+	
+	// ListAll retrieves all stored values
+	ListAll() ([]interface{}, error)
 }
