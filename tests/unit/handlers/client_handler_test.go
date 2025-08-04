@@ -1,8 +1,12 @@
 package handlers
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -41,11 +45,14 @@ func TestClientHandler_ListClients_GET_WithClients(t *testing.T) {
 	billingService := application.NewBillingService(clientRepo)
 	handler := handlers.NewClientHandler(billingService)
 
-	// Create test clients
-	_, err := billingService.CreateClient("John Doe", "john@example.com", "+1234567890", "123 Main St")
+	// Load test fixtures
+	fixtures := loadHandlerTestFixtures(t)
+	
+	// Create test clients from fixtures
+	_, err := billingService.CreateClient(fixtures[0].Name, fixtures[0].Email, fixtures[0].Phone, fixtures[0].Address)
 	assert.NoError(t, err)
 	
-	_, err = billingService.CreateClient("Jane Smith", "jane@example.com", "+0987654321", "456 Oak Ave")
+	_, err = billingService.CreateClient(fixtures[1].Name, fixtures[1].Email, fixtures[1].Phone, fixtures[1].Address)
 	assert.NoError(t, err)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/clients", nil)
@@ -61,10 +68,10 @@ func TestClientHandler_ListClients_GET_WithClients(t *testing.T) {
 	// Check response contains both clients
 	responseBody := rr.Body.String()
 	assert.Contains(t, responseBody, `"success":true`)
-	assert.Contains(t, responseBody, "john@example.com")
-	assert.Contains(t, responseBody, "jane@example.com")
-	assert.Contains(t, responseBody, "John Doe")
-	assert.Contains(t, responseBody, "Jane Smith")
+	assert.Contains(t, responseBody, fixtures[0].Email)
+	assert.Contains(t, responseBody, fixtures[1].Email)
+	assert.Contains(t, responseBody, fixtures[0].Name)
+	assert.Contains(t, responseBody, fixtures[1].Name)
 }
 
 func TestClientHandler_ListClients_MethodNotAllowed(t *testing.T) {
@@ -105,4 +112,31 @@ func TestClientHandler_ListClients_PUT_MethodNotAllowed(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, http.StatusMethodNotAllowed, rr.Code)
+}
+
+type ClientFixture struct {
+	Name    string `json:"name"`
+	Email   string `json:"email"`
+	Phone   string `json:"phone"`
+	Address string `json:"address"`
+}
+
+func loadHandlerTestFixtures(t *testing.T) []ClientFixture {
+	// Get current file directory
+	_, currentFile, _, ok := runtime.Caller(0)
+	assert.True(t, ok, "Failed to get current file path")
+	
+	// Build path to fixture data
+	testDataPath := filepath.Join(filepath.Dir(currentFile), "..", "..", "testdata", "client", "client_fixtures.json")
+	
+	// Read fixture data file
+	data, err := os.ReadFile(testDataPath)
+	assert.NoError(t, err, "Failed to read fixture data file")
+	
+	// Parse JSON
+	var fixtures []ClientFixture
+	err = json.Unmarshal(data, &fixtures)
+	assert.NoError(t, err, "Failed to parse fixture data JSON")
+	
+	return fixtures
 }

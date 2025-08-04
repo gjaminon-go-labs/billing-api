@@ -28,6 +28,9 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -35,8 +38,13 @@ import (
 	"github.com/gjaminon-go-labs/billing-api/tests/testhelpers"
 )
 
+// BUSINESS_TITLE: End-to-End Client Creation
+// BUSINESS_DESCRIPTION: Complete client creation workflow from web form submission to database storage, simulating real user interactions
+// USER_STORY: As an end user, I want to create clients through the web interface and have them properly saved in the system
+// BUSINESS_VALUE: Validates the complete user journey, ensures end-to-end functionality works as business expects
+// SCENARIOS_TESTED: Full HTTP request cycle, real network calls, complete data persistence, user experience validation
 func TestHTTPServer_Integration_CreateClient(t *testing.T) {
-	// Load test data
+	// Load test data using shared helper function
 	testCases := loadHTTPIntegrationTestCases(t)
 	
 	// Set up complete HTTP server using InMemory test helpers
@@ -107,6 +115,11 @@ func TestHTTPServer_Integration_CreateClient(t *testing.T) {
 	}
 }
 
+// BUSINESS_TITLE: Data Persistence Between User Sessions
+// BUSINESS_DESCRIPTION: Client data remains available across multiple user sessions and HTTP requests, ensuring data durability
+// USER_STORY: As a user, I want my client data to be saved permanently so I can access it in future sessions
+// BUSINESS_VALUE: Confirms data persistence, validates session independence, ensures business continuity
+// SCENARIOS_TESTED: Multi-request data persistence, session independence, data durability, unique client IDs
 func TestHTTPServer_Integration_PersistenceAcrossRequests(t *testing.T) {
 	// Set up complete HTTP server using InMemory test helpers (shared storage)
 	server := testhelpers.NewInMemoryTestServer()
@@ -115,11 +128,15 @@ func TestHTTPServer_Integration_PersistenceAcrossRequests(t *testing.T) {
 	testServer := httptest.NewServer(server.Handler())
 	defer testServer.Close()
 
-	// Create first client
+	// Load test fixtures for persistence test
+	fixtures := loadHTTPIntegrationFixtures(t)
+	
+	// Create first client from fixture
 	firstClient := dtos.CreateClientRequest{
-		Name:  "First Client",
-		Email: "first@example.com",
-		Phone: "+1234567890",
+		Name:    fixtures[0].Name,
+		Email:   fixtures[0].Email,
+		Phone:   fixtures[0].Phone,
+		Address: fixtures[0].Address,
 	}
 	requestBody, _ := json.Marshal(firstClient)
 	
@@ -128,11 +145,12 @@ func TestHTTPServer_Integration_PersistenceAcrossRequests(t *testing.T) {
 	defer resp1.Body.Close()
 	assert.Equal(t, http.StatusCreated, resp1.StatusCode)
 
-	// Create second client  
+	// Create second client from fixture
 	secondClient := dtos.CreateClientRequest{
-		Name:  "Second Client",
-		Email: "second@example.com",
-		Phone: "+0987654321",
+		Name:    fixtures[1].Name,
+		Email:   fixtures[1].Email,
+		Phone:   fixtures[1].Phone,
+		Address: fixtures[1].Address,
 	}
 	requestBody, _ = json.Marshal(secondClient)
 	
@@ -150,6 +168,33 @@ func TestHTTPServer_Integration_PersistenceAcrossRequests(t *testing.T) {
 	data2 := response2["data"].(map[string]interface{})
 	
 	assert.NotEqual(t, data1["id"], data2["id"], "Different clients should have different IDs")
-	assert.Equal(t, "First Client", data1["name"])
-	assert.Equal(t, "Second Client", data2["name"])
+	assert.Equal(t, fixtures[0].Name, data1["name"])
+	assert.Equal(t, fixtures[1].Name, data2["name"])
+}
+
+type ClientFixture struct {
+	Name    string `json:"name"`
+	Email   string `json:"email"`
+	Phone   string `json:"phone"`
+	Address string `json:"address"`
+}
+
+func loadHTTPIntegrationFixtures(t *testing.T) []ClientFixture {
+	// Get current file directory
+	_, currentFile, _, ok := runtime.Caller(0)
+	assert.True(t, ok, "Failed to get current file path")
+	
+	// Build path to fixture data  
+	testDataPath := filepath.Join(filepath.Dir(currentFile), "..", "..", "testdata", "client", "http_integration_fixtures.json")
+	
+	// Read fixture data file
+	data, err := os.ReadFile(testDataPath)
+	assert.NoError(t, err, "Failed to read fixture data file")
+	
+	// Parse JSON
+	var fixtures []ClientFixture
+	err = json.Unmarshal(data, &fixtures)
+	assert.NoError(t, err, "Failed to parse fixture data JSON")
+	
+	return fixtures
 }

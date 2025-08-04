@@ -9,6 +9,7 @@ help:
 	@echo "  restore          - Install/update package dependencies"
 	@echo "  test-unit        - Run unit tests only (domain layer validation)"
 	@echo "  test-integration - Run integration tests only (requires local PostgreSQL)"
+	@echo "  test-integration-report - Run integration tests and generate business coverage report"
 	@echo "  test-all         - Run all tests (unit + integration)"
 	@echo "  migrate-up       - Run all pending database migrations (dev environment)"
 	@echo "  migrate-down     - Roll back one database migration (dev environment)"
@@ -78,6 +79,30 @@ test-integration:
 		exit 1; \
 	fi
 	go test -v ./tests/integration/...
+
+test-integration-report:
+	@echo "Running integration tests and generating business coverage report..."
+	@echo "Checking PostgreSQL connectivity..."
+	@if ! command -v psql >/dev/null 2>&1; then \
+		echo "❌ Error: psql command not found. Please install PostgreSQL client."; \
+		exit 1; \
+	fi
+	@if ! PGPASSWORD=postgres psql -h localhost -p 5432 -U postgres -d go-labs-tst -c "SELECT 1;" >/dev/null 2>&1; then \
+		echo "❌ Error: Cannot connect to PostgreSQL at localhost:5432 or database 'go-labs-tst' does not exist"; \
+		echo "   Please ensure:"; \
+		echo "   1. PostgreSQL is running locally"; \
+		echo "   2. Database 'go-labs-tst' exists (run 'make test-setup' to create)"; \
+		echo "   3. Connection credentials are correct (postgres/postgres)"; \
+		echo "   4. Test database migrations are up to date (run 'make migrate-up-test')"; \
+		exit 1; \
+	fi
+	@echo "✅ Running integration tests..."
+	go test -v ./tests/integration/...
+	@echo "📊 Generating business coverage report..."
+	cd tests && go run generate-coverage-report.go
+	@echo "✅ Reports generated:"
+	@echo "   📋 HTML Report: tests/reports/integration-coverage-report.html"
+	@echo "   📄 Summary: tests/reports/integration-coverage-summary.md"
 
 test-all:
 	@echo "Running all tests (unit + integration)..."
@@ -151,4 +176,4 @@ clean:
 	@echo "Cleaning build artifacts..."
 	rm -rf bin/
 
-.PHONY: help dev-setup test-setup restore test-unit test-integration test-all migrate-up migrate-down migrate-status migrate-reset run-dev build clean validate-env
+.PHONY: help dev-setup test-setup restore test-unit test-integration test-integration-report test-all migrate-up migrate-down migrate-status migrate-reset run-dev build clean validate-env

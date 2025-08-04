@@ -79,16 +79,24 @@ func TestBillingService_CreateClient(t *testing.T) {
 }
 
 
+// BUSINESS_TITLE: Client List Business Logic
+// BUSINESS_DESCRIPTION: Business service layer properly orchestrates client retrieval, ensuring data consistency and business rule enforcement
+// USER_STORY: As a business analyst, I want to ensure the system correctly processes client list requests through all business layers
+// BUSINESS_VALUE: Validates that business logic layer works correctly, ensures data integrity, confirms proper service orchestration
+// SCENARIOS_TESTED: Service layer coordination, business rule application, data persistence validation
 func TestBillingService_ListClients_IntegrationTest(t *testing.T) {
 	// Set up dependencies with PostgreSQL storage
 	stack := testhelpers.NewCleanIntegrationTestStack()
 	service := stack.BillingService
 	
-	// Create test clients
-	client1, err := service.CreateClient("John Doe", "john@example.com", "+1234567890", "123 Main St")
+	// Load test client fixtures
+	fixtures := loadClientFixtures(t)
+	
+	// Create test clients from fixtures
+	client1, err := service.CreateClient(fixtures[0].Name, fixtures[0].Email, fixtures[0].Phone, fixtures[0].Address)
 	assert.NoError(t, err)
 	
-	client2, err := service.CreateClient("Jane Smith", "jane@example.com", "+0987654321", "456 Oak Ave")
+	client2, err := service.CreateClient(fixtures[1].Name, fixtures[1].Email, fixtures[1].Phone, fixtures[1].Address)
 	assert.NoError(t, err)
 
 	// Act
@@ -100,7 +108,7 @@ func TestBillingService_ListClients_IntegrationTest(t *testing.T) {
 	assert.Len(t, clients, 2)
 	
 	// Verify clients are present (order may vary)
-	expectedEmails := []string{"john@example.com", "jane@example.com"}
+	expectedEmails := []string{fixtures[0].Email, fixtures[1].Email}
 	actualEmails := make([]string, len(clients))
 	for i, client := range clients {
 		actualEmails[i] = client.EmailString()
@@ -112,18 +120,45 @@ func TestBillingService_ListClients_IntegrationTest(t *testing.T) {
 	
 	// Verify that client details are properly deserialized from PostgreSQL
 	for _, client := range clients {
-		if client.EmailString() == "john@example.com" {
+		if client.EmailString() == fixtures[0].Email {
 			assert.Equal(t, client1.ID(), client.ID())
-			assert.Equal(t, "John Doe", client.Name())
-			assert.Equal(t, "+1234567890", client.PhoneString())
-			assert.Equal(t, "123 Main St", client.Address())
-		} else if client.EmailString() == "jane@example.com" {
+			assert.Equal(t, fixtures[0].Name, client.Name())
+			assert.Equal(t, fixtures[0].Phone, client.PhoneString())
+			assert.Equal(t, fixtures[0].Address, client.Address())
+		} else if client.EmailString() == fixtures[1].Email {
 			assert.Equal(t, client2.ID(), client.ID())
-			assert.Equal(t, "Jane Smith", client.Name())
-			assert.Equal(t, "+0987654321", client.PhoneString())
-			assert.Equal(t, "456 Oak Ave", client.Address())
+			assert.Equal(t, fixtures[1].Name, client.Name())
+			assert.Equal(t, fixtures[1].Phone, client.PhoneString())
+			assert.Equal(t, fixtures[1].Address, client.Address())
 		}
 	}
+}
+
+type ClientFixture struct {
+	Name    string `json:"name"`
+	Email   string `json:"email"`
+	Phone   string `json:"phone"`
+	Address string `json:"address"`
+}
+
+func loadClientFixtures(t *testing.T) []ClientFixture {
+	// Get current file directory
+	_, currentFile, _, ok := runtime.Caller(0)
+	assert.True(t, ok, "Failed to get current file path")
+	
+	// Build path to fixture data at tests root
+	testDataPath := filepath.Join(filepath.Dir(currentFile), "..", "..", "testdata", "client", "client_fixtures.json")
+	
+	// Read fixture data file
+	data, err := os.ReadFile(testDataPath)
+	assert.NoError(t, err, "Failed to read fixture data file")
+	
+	// Parse JSON
+	var fixtures []ClientFixture
+	err = json.Unmarshal(data, &fixtures)
+	assert.NoError(t, err, "Failed to parse fixture data JSON")
+	
+	return fixtures
 }
 
 func loadClientTestCases(t *testing.T) []ClientTestCase {

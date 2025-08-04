@@ -4,6 +4,9 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -11,16 +14,24 @@ import (
 	"github.com/gjaminon-go-labs/billing-api/tests/testhelpers"
 )
 
+// BUSINESS_TITLE: View All Clients
+// BUSINESS_DESCRIPTION: Sales representatives and managers can view a complete list of all clients in the system for planning and relationship management
+// USER_STORY: As a sales manager, I want to see all clients in the system so that I can track our customer base and assign accounts to team members
+// BUSINESS_VALUE: Provides visibility into customer portfolio, enables territory management, supports sales planning and customer relationship oversight
+// SCENARIOS_TESTED: Retrieving client lists with data, proper client information display, handling multiple clients
 func TestClientHandler_ListClients_IntegrationTest(t *testing.T) {
 	// Arrange - Set up integration test server with PostgreSQL storage
 	stack := testhelpers.NewCleanIntegrationTestStack()
 	server := stack.HTTPServer
 	
-	// Create test clients via service
-	_, err := stack.BillingService.CreateClient("John Doe", "john@example.com", "+1234567890", "123 Main St")
+	// Load test fixtures
+	fixtures := loadAPITestFixtures(t)
+	
+	// Create test clients via service from fixtures
+	_, err := stack.BillingService.CreateClient(fixtures[0].Name, fixtures[0].Email, fixtures[0].Phone, fixtures[0].Address)
 	assert.NoError(t, err)
 	
-	_, err = stack.BillingService.CreateClient("Jane Smith", "jane@example.com", "+0987654321", "456 Oak Ave")
+	_, err = stack.BillingService.CreateClient(fixtures[1].Name, fixtures[1].Email, fixtures[1].Phone, fixtures[1].Address)
 	assert.NoError(t, err)
 
 	// Create HTTP request
@@ -61,18 +72,23 @@ func TestClientHandler_ListClients_IntegrationTest(t *testing.T) {
 		assert.Contains(t, clientMap, "updated_at")
 		
 		// Check one of our test clients
-		if clientMap["email"] == "john@example.com" {
-			assert.Equal(t, "John Doe", clientMap["name"])
-			assert.Equal(t, "+1234567890", clientMap["phone"])
-			assert.Equal(t, "123 Main St", clientMap["address"])
-		} else if clientMap["email"] == "jane@example.com" {
-			assert.Equal(t, "Jane Smith", clientMap["name"])
-			assert.Equal(t, "+0987654321", clientMap["phone"])
-			assert.Equal(t, "456 Oak Ave", clientMap["address"])
+		if clientMap["email"] == fixtures[0].Email {
+			assert.Equal(t, fixtures[0].Name, clientMap["name"])
+			assert.Equal(t, fixtures[0].Phone, clientMap["phone"])
+			assert.Equal(t, fixtures[0].Address, clientMap["address"])
+		} else if clientMap["email"] == fixtures[1].Email {
+			assert.Equal(t, fixtures[1].Name, clientMap["name"])
+			assert.Equal(t, fixtures[1].Phone, clientMap["phone"])
+			assert.Equal(t, fixtures[1].Address, clientMap["address"])
 		}
 	}
 }
 
+// BUSINESS_TITLE: Empty Client List Handling
+// BUSINESS_DESCRIPTION: System gracefully handles scenarios where no clients exist yet, providing clear messaging for new users or empty databases
+// USER_STORY: As a new user setting up the system, I want to see an appropriate message when no clients exist so that I understand the system is working correctly
+// BUSINESS_VALUE: Improves user experience for new system deployments, prevents confusion about empty states, guides users toward their first actions
+// SCENARIOS_TESTED: Empty database states, proper empty list responses, user-friendly empty state handling
 func TestClientHandler_ListClients_EmptyList_IntegrationTest(t *testing.T) {
 	// Arrange - Set up integration test server with clean PostgreSQL storage
 	stack := testhelpers.NewCleanIntegrationTestStack()
@@ -101,4 +117,31 @@ func TestClientHandler_ListClients_EmptyList_IntegrationTest(t *testing.T) {
 	clientsData, ok := response.Data.([]interface{})
 	assert.True(t, ok, "Data should be an array")
 	assert.Empty(t, clientsData)
+}
+
+type ClientFixture struct {
+	Name    string `json:"name"`
+	Email   string `json:"email"`
+	Phone   string `json:"phone"`
+	Address string `json:"address"`
+}
+
+func loadAPITestFixtures(t *testing.T) []ClientFixture {
+	// Get current file directory
+	_, currentFile, _, ok := runtime.Caller(0)
+	assert.True(t, ok, "Failed to get current file path")
+	
+	// Build path to fixture data
+	testDataPath := filepath.Join(filepath.Dir(currentFile), "..", "..", "testdata", "client", "client_fixtures.json")
+	
+	// Read fixture data file
+	data, err := os.ReadFile(testDataPath)
+	assert.NoError(t, err, "Failed to read fixture data file")
+	
+	// Parse JSON
+	var fixtures []ClientFixture
+	err = json.Unmarshal(data, &fixtures)
+	assert.NoError(t, err, "Failed to parse fixture data JSON")
+	
+	return fixtures
 }
