@@ -189,3 +189,12 @@ func NewValidationErrors() *ValidationErrors {
 		Errors: make([]ValidationError, 0),
 	}
 }
+
+// Common client domain errors
+var (
+	// ErrClientNotFound represents a client not found error
+	ErrClientNotFound = NewRepositoryError("get_client", RepositoryNotFound, "client not found", nil)
+	
+	// ErrClientEmailExists represents a client email uniqueness violation
+	ErrClientEmailExists = NewBusinessRuleError("email_uniqueness", BusinessRuleConflict, "email address already exists")
+)

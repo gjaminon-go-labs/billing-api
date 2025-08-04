@@ -61,3 +61,16 @@ func (s *InMemoryStorage) ListAll() ([]interface{}, error) {
 	
 	return values, nil
 }
+
+// Delete removes a value by key
+func (s *InMemoryStorage) Delete(key string) error {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+	
+	if _, exists := s.data[key]; !exists {
+		return fmt.Errorf("key not found: %s", key)
+	}
+	
+	delete(s.data, key)
+	return nil
+}

@@ -94,3 +94,69 @@ func (r *ClientRepositoryImpl) deserializeClient(clientMap map[string]interface{
 	
 	return &client, nil
 }
+
+// GetByID retrieves a client entity by ID
+func (r *ClientRepositoryImpl) GetByID(id string) (*entity.Client, error) {
+	// Get value from storage
+	value, err := r.storage.Get(id)
+	if err != nil {
+		// Check if it's a "not found" error
+		if err.Error() == fmt.Sprintf("key not found: %s", id) {
+			return nil, errors.ErrClientNotFound
+		}
+		
+		return nil, errors.NewRepositoryError(
+			"get_client",
+			errors.RepositoryInternal,
+			"failed to retrieve client",
+			err,
+		)
+	}
+	
+	// Try direct type assertion first (for in-memory storage)
+	if client, ok := value.(*entity.Client); ok {
+		return client, nil
+	}
+	
+	// Handle JSON deserialization (for PostgreSQL storage)
+	if clientMap, ok := value.(map[string]interface{}); ok {
+		client, err := r.deserializeClient(clientMap)
+		if err != nil {
+			return nil, errors.NewRepositoryError(
+				"deserialize_client",
+				errors.RepositoryInternal,
+				"failed to deserialize client",
+				err,
+			)
+		}
+		return client, nil
+	}
+	
+	return nil, errors.NewRepositoryError(
+		"get_client",
+		errors.RepositoryInternal,
+		"unexpected value type in storage",
+		nil,
+	)
+}
+
+// Delete removes a client entity by ID
+func (r *ClientRepositoryImpl) Delete(id string) error {
+	// Use storage Delete method
+	err := r.storage.Delete(id)
+	if err != nil {
+		// Check if it's a "not found" error
+		if err.Error() == fmt.Sprintf("key not found: %s", id) {
+			return errors.ErrClientNotFound
+		}
+		
+		return errors.NewRepositoryError(
+			"delete_client",
+			errors.RepositoryInternal,
+			"failed to delete client",
+			err,
+		)
+	}
+	
+	return nil
+}

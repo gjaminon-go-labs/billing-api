@@ -11,4 +11,10 @@ type ClientRepository interface {
 	
 	// GetAll retrieves all client entities
 	GetAll() ([]*entity.Client, error)
+	
+	// GetByID retrieves a client entity by ID
+	GetByID(id string) (*entity.Client, error)
+	
+	// Delete removes a client entity by ID
+	Delete(id string) error
 }

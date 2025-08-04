@@ -13,4 +13,7 @@ type Storage interface {
 	
 	// ListAll retrieves all stored values
 	ListAll() ([]interface{}, error)
+	
+	// Delete removes a value by key
+	Delete(key string) error
 }
