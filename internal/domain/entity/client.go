@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"encoding/json"
 	"strings"
 	"time"
 
@@ -12,7 +13,7 @@ import (
 
 // Client represents a billing client aggregate root
 type Client struct {
-	id        string
+	id        string `validate:"required,min=2,max=100"`
 	name      string `validate:"required,min=2,max=100"`
 	email     valueobject.Email
 	phone     valueobject.Phone
@@ -232,4 +233,57 @@ func (c *Client) Equals(other *Client) bool {
 // String returns a string representation of the client
 func (c *Client) String() string {
 	return "Client{ID: " + c.id + ", Name: " + c.name + ", Email: " + c.email.String() + "}"
+}
+
+// MarshalJSON implements custom JSON marshaling for Client
+func (c *Client) MarshalJSON() ([]byte, error) {
+	// Create a struct with public fields for JSON marshaling
+	jsonClient := struct {
+		ID        string            `json:"id"`
+		Name      string            `json:"name"`
+		Email     valueobject.Email `json:"email"`
+		Phone     valueobject.Phone `json:"phone"`
+		Address   string            `json:"address"`
+		CreatedAt time.Time         `json:"createdAt"`
+		UpdatedAt time.Time         `json:"updatedAt"`
+	}{
+		ID:        c.id,
+		Name:      c.name,
+		Email:     c.email,
+		Phone:     c.phone,
+		Address:   c.address,
+		CreatedAt: c.createdAt,
+		UpdatedAt: c.updatedAt,
+	}
+	
+	return json.Marshal(jsonClient)
+}
+
+// UnmarshalJSON implements custom JSON unmarshaling for Client
+func (c *Client) UnmarshalJSON(data []byte) error {
+	// Create a struct with public fields for JSON unmarshaling
+	var jsonClient struct {
+		ID        string            `json:"id"`
+		Name      string            `json:"name"`
+		Email     valueobject.Email `json:"email"`
+		Phone     valueobject.Phone `json:"phone"`
+		Address   string            `json:"address"`
+		CreatedAt time.Time         `json:"createdAt"`
+		UpdatedAt time.Time         `json:"updatedAt"`
+	}
+	
+	if err := json.Unmarshal(data, &jsonClient); err != nil {
+		return err
+	}
+	
+	// Assign to private fields
+	c.id = jsonClient.ID
+	c.name = jsonClient.Name
+	c.email = jsonClient.Email
+	c.phone = jsonClient.Phone
+	c.address = jsonClient.Address
+	c.createdAt = jsonClient.CreatedAt
+	c.updatedAt = jsonClient.UpdatedAt
+	
+	return nil
 }

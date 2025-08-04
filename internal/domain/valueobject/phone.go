@@ -1,6 +1,7 @@
 package valueobject
 
 import (
+	"encoding/json"
 	"strings"
 	
 	"github.com/gjaminon-go-labs/billing-api/internal/domain/errors"
@@ -8,7 +9,7 @@ import (
 
 // Phone represents a validated phone number value object
 type Phone struct {
-	value string
+	value string `json:"value"`
 }
 
 // NewPhone creates a new Phone value object with validation
@@ -72,4 +73,27 @@ func (p Phone) WithoutCountryCode() string {
 		return p.value[1:]
 	}
 	return p.value
+}
+
+// MarshalJSON implements custom JSON marshaling for Phone
+func (p Phone) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		Value string `json:"value"`
+	}{
+		Value: p.value,
+	})
+}
+
+// UnmarshalJSON implements custom JSON unmarshaling for Phone
+func (p *Phone) UnmarshalJSON(data []byte) error {
+	var temp struct {
+		Value string `json:"value"`
+	}
+	
+	if err := json.Unmarshal(data, &temp); err != nil {
+		return err
+	}
+	
+	p.value = temp.Value
+	return nil
 }

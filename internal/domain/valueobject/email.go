@@ -1,6 +1,7 @@
 package valueobject
 
 import (
+	"encoding/json"
 	"strings"
 	
 	"github.com/gjaminon-go-labs/billing-api/internal/domain/errors"
@@ -8,7 +9,7 @@ import (
 
 // Email represents a validated email address value object
 type Email struct {
-	value string
+	value string `json:"value"`
 }
 
 // NewEmail creates a new Email value object with validation
@@ -91,4 +92,27 @@ func (e Email) LocalPart() string {
 		return ""
 	}
 	return parts[0]
+}
+
+// MarshalJSON implements custom JSON marshaling for Email
+func (e Email) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		Value string `json:"value"`
+	}{
+		Value: e.value,
+	})
+}
+
+// UnmarshalJSON implements custom JSON unmarshaling for Email
+func (e *Email) UnmarshalJSON(data []byte) error {
+	var temp struct {
+		Value string `json:"value"`
+	}
+	
+	if err := json.Unmarshal(data, &temp); err != nil {
+		return err
+	}
+	
+	e.value = temp.Value
+	return nil
 }

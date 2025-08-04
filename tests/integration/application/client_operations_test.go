@@ -29,6 +29,7 @@ import (
 	"github.com/gjaminon-go-labs/billing-api/internal/application"
 	"github.com/gjaminon-go-labs/billing-api/internal/infrastructure/repository"
 	"github.com/gjaminon-go-labs/billing-api/tests/infrastructure"
+	"github.com/gjaminon-go-labs/billing-api/tests/testhelpers"
 )
 
 type ClientTestCase struct {
@@ -77,6 +78,53 @@ func TestBillingService_CreateClient(t *testing.T) {
 	}
 }
 
+
+func TestBillingService_ListClients_IntegrationTest(t *testing.T) {
+	// Set up dependencies with PostgreSQL storage
+	stack := testhelpers.NewCleanIntegrationTestStack()
+	service := stack.BillingService
+	
+	// Create test clients
+	client1, err := service.CreateClient("John Doe", "john@example.com", "+1234567890", "123 Main St")
+	assert.NoError(t, err)
+	
+	client2, err := service.CreateClient("Jane Smith", "jane@example.com", "+0987654321", "456 Oak Ave")
+	assert.NoError(t, err)
+
+	// Act
+	clients, err := service.ListClients()
+
+	// Assert
+	assert.NoError(t, err)
+	assert.NotNil(t, clients)
+	assert.Len(t, clients, 2)
+	
+	// Verify clients are present (order may vary)
+	expectedEmails := []string{"john@example.com", "jane@example.com"}
+	actualEmails := make([]string, len(clients))
+	for i, client := range clients {
+		actualEmails[i] = client.EmailString()
+	}
+	
+	for _, expectedEmail := range expectedEmails {
+		assert.Contains(t, actualEmails, expectedEmail)
+	}
+	
+	// Verify that client details are properly deserialized from PostgreSQL
+	for _, client := range clients {
+		if client.EmailString() == "john@example.com" {
+			assert.Equal(t, client1.ID(), client.ID())
+			assert.Equal(t, "John Doe", client.Name())
+			assert.Equal(t, "+1234567890", client.PhoneString())
+			assert.Equal(t, "123 Main St", client.Address())
+		} else if client.EmailString() == "jane@example.com" {
+			assert.Equal(t, client2.ID(), client.ID())
+			assert.Equal(t, "Jane Smith", client.Name())
+			assert.Equal(t, "+0987654321", client.PhoneString())
+			assert.Equal(t, "456 Oak Ave", client.Address())
+		}
+	}
+}
 
 func loadClientTestCases(t *testing.T) []ClientTestCase {
 	// Get current file directory

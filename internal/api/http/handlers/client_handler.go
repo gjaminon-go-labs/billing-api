@@ -61,6 +61,31 @@ func (h *ClientHandler) CreateClient(w http.ResponseWriter, r *http.Request) {
 	h.writeSuccessResponse(w, http.StatusCreated, response)
 }
 
+// ListClients handles GET /clients requests
+func (h *ClientHandler) ListClients(w http.ResponseWriter, r *http.Request) {
+	// Only allow GET method
+	if r.Method != http.MethodGet {
+		h.writeErrorResponse(w, http.StatusMethodNotAllowed, "METHOD_NOT_ALLOWED", "Method not allowed", "")
+		return
+	}
+
+	// Call application service
+	clients, err := h.billingService.ListClients()
+	if err != nil {
+		h.handleDomainError(w, err)
+		return
+	}
+
+	// Convert domain entities to response DTOs
+	response := make([]dtos.ClientResponse, len(clients))
+	for i, client := range clients {
+		response[i] = h.toClientResponse(client)
+	}
+
+	// Write success response
+	h.writeSuccessResponse(w, http.StatusOK, response)
+}
+
 // handleDomainError converts domain errors to appropriate HTTP responses
 func (h *ClientHandler) handleDomainError(w http.ResponseWriter, err error) {
 	// Check error type and map to HTTP status code

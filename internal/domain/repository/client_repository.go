@@ -8,4 +8,7 @@ import (
 type ClientRepository interface {
 	// Save persists a client entity
 	Save(client *entity.Client) error
+	
+	// GetAll retrieves all client entities
+	GetAll() ([]*entity.Client, error)
 }
