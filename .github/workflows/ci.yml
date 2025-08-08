@@ -229,15 +229,19 @@ jobs:
         run: |
           TAGS=""
           
-          # Pull request
+          # Pull request - use branch name
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            TAGS="ghcr.io/gjaminon-go-labs/billing-api:pr-${{ github.event.pull_request.number }}"
+            # Get the branch name from the PR
+            BRANCH="${{ github.head_ref }}"
+            # Replace / with - in branch names
+            SAFE_BRANCH=${BRANCH//\//-}
+            TAGS="ghcr.io/gjaminon-go-labs/billing-api:${SAFE_BRANCH}"
             
           # Main branch
           elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
             TAGS="ghcr.io/gjaminon-go-labs/billing-api:latest"
             
-          # Feature/fix branches
+          # Feature/fix branches (direct push, not PR)
           else
             BRANCH=${GITHUB_REF#refs/heads/}
             # Replace / with - in branch names
