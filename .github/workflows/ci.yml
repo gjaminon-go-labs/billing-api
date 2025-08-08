@@ -136,9 +136,6 @@ jobs:
           DB_NAME: go-labs-tst
           DB_SSLMODE: disable
           APP_ENV: test
-          # Disable cleanup - CI always starts with fresh database
-          TEST_CLEANUP_ENABLED: "false"
-          TEST_CLEANUP_ON_SETUP: "false"
         run: go test -v -race -coverprofile=coverage-integration.out ./tests/integration/...
 
       # Upload integration test coverage
