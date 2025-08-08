@@ -132,6 +132,13 @@ func NewProductionContainer(config *Config) *di.Container {
 	return di.NewContainer(diConfig)
 }
 
+// NewProductionContainerWithVersion creates a DI container with version information
+func NewProductionContainerWithVersion(config *Config, version string) *di.Container {
+	diConfig := config.ToDIConfig()
+	diConfig.Version = version
+	return di.NewContainer(diConfig)
+}
+
 // NewProductionContainerFromEnvironment loads config and creates DI container
 func NewProductionContainerFromEnvironment(environment string) (*di.Container, error) {
 	config, err := LoadConfig(environment)
@@ -140,5 +147,16 @@ func NewProductionContainerFromEnvironment(environment string) (*di.Container, e
 	}
 
 	container := NewProductionContainer(config)
+	return container, nil
+}
+
+// NewProductionContainerFromEnvironmentWithVersion loads config and creates DI container with version
+func NewProductionContainerFromEnvironmentWithVersion(environment string, version string) (*di.Container, error) {
+	config, err := LoadConfig(environment)
+	if err != nil {
+		return nil, err
+	}
+
+	container := NewProductionContainerWithVersion(config, version)
 	return container, nil
 }

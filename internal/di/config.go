@@ -47,6 +47,9 @@ type ContainerConfig struct {
 
 	// Environment
 	Environment string `yaml:"environment" json:"environment"`
+
+	// Version information
+	Version string `yaml:"version" json:"version"`
 }
 
 // UnitTestConfig returns a configuration suitable for unit testing (memory storage)
