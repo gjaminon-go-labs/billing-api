@@ -229,19 +229,15 @@ jobs:
         run: |
           TAGS=""
           
-          # Pull request - tag with both PR number and branch name
+          # Pull request
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            # Get the branch name from the PR
-            BRANCH="${{ github.head_ref }}"
-            # Replace / with - in branch names
-            SAFE_BRANCH=${BRANCH//\//-}
-            TAGS="ghcr.io/gjaminon-go-labs/billing-api:pr-${{ github.event.pull_request.number }},ghcr.io/gjaminon-go-labs/billing-api:${SAFE_BRANCH}"
+            TAGS="ghcr.io/gjaminon-go-labs/billing-api:pr-${{ github.event.pull_request.number }}"
             
           # Main branch
           elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
             TAGS="ghcr.io/gjaminon-go-labs/billing-api:latest"
             
-          # Feature/fix branches (direct push, not PR)
+          # Feature/fix branches
           else
             BRANCH=${GITHUB_REF#refs/heads/}
             # Replace / with - in branch names
@@ -360,31 +356,15 @@ jobs:
           echo "commit=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
           echo "date=$(date -u +"%Y-%m-%dT%H:%M:%SZ")" >> $GITHUB_OUTPUT
           
-      - name: Calculate version tags
-        if: steps.check_release.outputs.new_release == 'true'
-        id: version_tags
-        run: |
-          VERSION=${{ steps.check_release.outputs.version }}
-          # Extract major, minor from version (e.g., 1.2.3 -> 1, 1.2)
-          MAJOR=$(echo $VERSION | cut -d. -f1)
-          MINOR=$(echo $VERSION | cut -d. -f1-2)
-          
-          # Build all tags
-          TAGS="ghcr.io/gjaminon-go-labs/billing-api:$VERSION"
-          TAGS="$TAGS,ghcr.io/gjaminon-go-labs/billing-api:$MINOR"
-          TAGS="$TAGS,ghcr.io/gjaminon-go-labs/billing-api:$MAJOR"
-          TAGS="$TAGS,ghcr.io/gjaminon-go-labs/billing-api:latest"
-          
-          echo "tags=$TAGS" >> $GITHUB_OUTPUT
-          echo "Version tags: $TAGS"
-          
       - name: Build and push versioned images
         if: steps.check_release.outputs.new_release == 'true'
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          tags: ${{ steps.version_tags.outputs.tags }}
+          tags: |
+            ghcr.io/gjaminon-go-labs/billing-api:${{ steps.check_release.outputs.version }}
+            ghcr.io/gjaminon-go-labs/billing-api:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
