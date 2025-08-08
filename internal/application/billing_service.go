@@ -75,25 +75,25 @@ type PaginationMeta struct {
 func (s *BillingService) ListClientsWithPagination(page, limit int) (*PaginatedClients, error) {
 	// Calculate offset
 	offset := (page - 1) * limit
-	
+
 	// Get total count
 	totalCount, err := s.clientRepo.CountClients()
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Calculate total pages
 	totalPages := totalCount / limit
 	if totalCount%limit > 0 {
 		totalPages++
 	}
-	
+
 	// Get paginated results
 	clients, err := s.clientRepo.ListClientsWithPagination(offset, limit)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return &PaginatedClients{
 		Clients: clients,
 		Pagination: PaginationMeta{

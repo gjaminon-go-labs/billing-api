@@ -23,11 +23,11 @@ type PaginatedResponse struct {
 
 // DefaultPaginationValues defines default pagination parameters
 const (
-	DefaultPage     = 1
-	DefaultLimit    = 20
-	MaxLimit        = 100
-	MinLimit        = 1
-	MinPage         = 1
+	DefaultPage  = 1
+	DefaultLimit = 20
+	MaxLimit     = 100
+	MinLimit     = 1
+	MinPage      = 1
 )
 
 // Validate checks if pagination parameters are valid

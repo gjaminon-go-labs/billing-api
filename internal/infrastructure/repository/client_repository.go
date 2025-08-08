@@ -112,18 +112,18 @@ func (r *ClientRepositoryImpl) ListClientsWithPagination(offset, limit int) ([]*
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Apply pagination
 	start := offset
 	if start > len(allClients) {
 		return []*entity.Client{}, nil
 	}
-	
+
 	end := start + limit
 	if end > len(allClients) {
 		end = len(allClients)
 	}
-	
+
 	return allClients[start:end], nil
 }
 

@@ -73,12 +73,12 @@ func (h *ClientHandler) ListClients(w http.ResponseWriter, r *http.Request) {
 	// Parse pagination parameters
 	pageStr := r.URL.Query().Get("page")
 	limitStr := r.URL.Query().Get("limit")
-	
+
 	// Always use pagination (with defaults if not specified)
 	{
 		// Parse and validate pagination
 		paginationReq := dtos.PaginationRequest{}
-		
+
 		if pageStr != "" {
 			page := 0
 			_, err := fmt.Sscanf(pageStr, "%d", &page)
@@ -88,7 +88,7 @@ func (h *ClientHandler) ListClients(w http.ResponseWriter, r *http.Request) {
 			}
 			paginationReq.Page = page
 		}
-		
+
 		if limitStr != "" {
 			limit := 0
 			_, err := fmt.Sscanf(limitStr, "%d", &limit)
@@ -98,7 +98,7 @@ func (h *ClientHandler) ListClients(w http.ResponseWriter, r *http.Request) {
 			}
 			paginationReq.Limit = limit
 		}
-		
+
 		// Validate before setting defaults (to catch invalid values like 0 or negative)
 		if pageStr != "" && paginationReq.Page <= 0 {
 			h.writeErrorResponse(w, http.StatusBadRequest, "VALIDATION_ERROR", "page must be greater than 0", "")
@@ -108,29 +108,29 @@ func (h *ClientHandler) ListClients(w http.ResponseWriter, r *http.Request) {
 			h.writeErrorResponse(w, http.StatusBadRequest, "VALIDATION_ERROR", "limit must be between 1 and 100", "")
 			return
 		}
-		
+
 		// Set defaults
 		paginationReq.SetDefaults()
-		
+
 		// Final validation
 		if err := paginationReq.Validate(); err != nil {
 			h.writeErrorResponse(w, http.StatusBadRequest, "VALIDATION_ERROR", err.Error(), "")
 			return
 		}
-		
+
 		// Call paginated service method
 		result, err := h.billingService.ListClientsWithPagination(paginationReq.Page, paginationReq.Limit)
 		if err != nil {
 			h.handleDomainError(w, err)
 			return
 		}
-		
+
 		// Convert domain entities to response DTOs
 		clientResponses := make([]dtos.ClientResponse, len(result.Clients))
 		for i, client := range result.Clients {
 			clientResponses[i] = h.toClientResponse(client)
 		}
-		
+
 		// Create paginated response
 		paginationResponse := &dtos.PaginationResponse{
 			Page:       result.Pagination.Page,
@@ -138,7 +138,7 @@ func (h *ClientHandler) ListClients(w http.ResponseWriter, r *http.Request) {
 			TotalCount: result.Pagination.TotalCount,
 			TotalPages: result.Pagination.TotalPages,
 		}
-		
+
 		// Write paginated response
 		h.writePaginatedResponse(w, http.StatusOK, clientResponses, paginationResponse)
 	}
@@ -295,7 +295,7 @@ func (h *ClientHandler) writePaginatedResponse(w http.ResponseWriter, statusCode
 		Pagination: pagination,
 		Success:    true,
 	}
-	
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
 	json.NewEncoder(w).Encode(response)
