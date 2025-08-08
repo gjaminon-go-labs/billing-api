@@ -3,7 +3,7 @@ package valueobject
 import (
 	"encoding/json"
 	"strings"
-	
+
 	"github.com/gjaminon-go-labs/billing-api/internal/domain/errors"
 )
 
@@ -16,43 +16,43 @@ type Email struct {
 func NewEmail(email string) (Email, error) {
 	// Normalize the email
 	normalized := strings.ToLower(strings.TrimSpace(email))
-	
+
 	// Validate email format
 	if normalized == "" {
 		return Email{}, errors.NewValidationError("email", email, errors.ValidationRequired, "email is required")
 	}
-	
+
 	if len(normalized) > 254 {
 		return Email{}, errors.NewValidationError("email", email, errors.ValidationLength, "email too long (max 254 characters)")
 	}
-	
+
 	// Check for @ symbol
 	if !strings.Contains(normalized, "@") {
 		return Email{}, errors.NewValidationError("email", email, errors.ValidationFormat, "email must contain @ symbol")
 	}
-	
+
 	// Split and validate parts
 	parts := strings.Split(normalized, "@")
 	if len(parts) != 2 {
 		return Email{}, errors.NewValidationError("email", email, errors.ValidationFormat, "email must have exactly one @ symbol")
 	}
-	
+
 	localPart := parts[0]
 	domain := parts[1]
-	
+
 	if localPart == "" {
 		return Email{}, errors.NewValidationError("email", email, errors.ValidationFormat, "email missing local part")
 	}
-	
+
 	if domain == "" {
 		return Email{}, errors.NewValidationError("email", email, errors.ValidationFormat, "email missing domain")
 	}
-	
+
 	// Check for TLD (basic check)
 	if !strings.Contains(domain, ".") {
 		return Email{}, errors.NewValidationError("email", email, errors.ValidationFormat, "email domain missing TLD")
 	}
-	
+
 	return Email{value: normalized}, nil
 }
 
@@ -108,11 +108,11 @@ func (e *Email) UnmarshalJSON(data []byte) error {
 	var temp struct {
 		Value string `json:"value"`
 	}
-	
+
 	if err := json.Unmarshal(data, &temp); err != nil {
 		return err
 	}
-	
+
 	e.value = temp.Value
 	return nil
 }

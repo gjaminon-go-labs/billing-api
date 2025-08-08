@@ -22,12 +22,12 @@ func (e *ErrorHandler) RecoverMiddleware(next http.Handler) http.Handler {
 		defer func() {
 			if err := recover(); err != nil {
 				log.Printf("Panic recovered: %v", err)
-				
+
 				// Write internal server error response
 				e.writeErrorResponse(w, http.StatusInternalServerError, "INTERNAL_ERROR", "An internal error occurred")
 			}
 		}()
-		
+
 		next.ServeHTTP(w, r)
 	})
 }
@@ -46,13 +46,13 @@ func (e *ErrorHandler) CORSMiddleware(next http.Handler) http.Handler {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-		
+
 		// Handle preflight requests
 		if r.Method == http.MethodOptions {
 			w.WriteHeader(http.StatusOK)
 			return
 		}
-		
+
 		next.ServeHTTP(w, r)
 	})
 }

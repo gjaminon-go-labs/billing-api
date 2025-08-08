@@ -9,7 +9,7 @@ package di
 type ContainerConfig struct {
 	// Storage configuration
 	StorageType string `yaml:"storage_type" json:"storage_type"`
-	
+
 	// Database configuration (for PostgreSQL) - Application user
 	DatabaseURL      string `yaml:"database_url" json:"database_url"`
 	DatabaseHost     string `yaml:"database_host" json:"database_host"`
@@ -18,7 +18,7 @@ type ContainerConfig struct {
 	DatabaseUser     string `yaml:"database_user" json:"database_user"`
 	DatabasePassword string `yaml:"database_password" json:"database_password"`
 	DatabaseSchema   string `yaml:"database_schema" json:"database_schema"`
-	
+
 	// Migration database configuration - Migration user for DDL operations
 	MigrationDatabaseURL      string `yaml:"migration_database_url" json:"migration_database_url"`
 	MigrationDatabaseHost     string `yaml:"migration_database_host" json:"migration_database_host"`
@@ -27,24 +27,24 @@ type ContainerConfig struct {
 	MigrationDatabaseUser     string `yaml:"migration_database_user" json:"migration_database_user"`
 	MigrationDatabasePassword string `yaml:"migration_database_password" json:"migration_database_password"`
 	MigrationDatabaseSchema   string `yaml:"migration_database_schema" json:"migration_database_schema"`
-	
+
 	// Migration configuration
 	MigrationEnabled     bool   `yaml:"migration_enabled" json:"migration_enabled"`
 	MigrationPath        string `yaml:"migration_path" json:"migration_path"`
 	MigrationAutoMigrate bool   `yaml:"migration_auto_migrate" json:"migration_auto_migrate"`
 	MigrationTableName   string `yaml:"migration_table_name" json:"migration_table_name"`
-	
+
 	// Test configuration
 	TestCleanupEnabled bool `yaml:"test_cleanup_enabled" json:"test_cleanup_enabled"`
 	TestCleanupOnSetup bool `yaml:"test_cleanup_on_setup" json:"test_cleanup_on_setup"`
-	
+
 	// Logging configuration
 	LogLevel string `yaml:"log_level" json:"log_level"`
-	
+
 	// Server configuration
 	ServerPort int    `yaml:"server_port" json:"server_port"`
 	ServerHost string `yaml:"server_host" json:"server_host"`
-	
+
 	// Environment
 	Environment string `yaml:"environment" json:"environment"`
 }
@@ -63,7 +63,7 @@ func UnitTestConfig() *ContainerConfig {
 // IntegrationTestConfig returns a configuration suitable for integration testing (PostgreSQL)
 func IntegrationTestConfig() *ContainerConfig {
 	return &ContainerConfig{
-		StorageType:      "postgres",
+		StorageType: "postgres",
 		// Application database configuration (DML operations)
 		DatabaseURL:      "postgres://billing_app_tst_user:billing_app_tst_2025@localhost:5432/go-labs-tst?sslmode=disable&search_path=billing",
 		DatabaseHost:     "localhost",
@@ -81,16 +81,16 @@ func IntegrationTestConfig() *ContainerConfig {
 		MigrationDatabasePassword: "billing_migration_tst_2025",
 		MigrationDatabaseSchema:   "billing",
 		// Test configuration
-		TestCleanupEnabled: true,  // Enable test data cleanup by default
-		TestCleanupOnSetup: true,  // Cleanup on test setup by default
+		TestCleanupEnabled:   true, // Enable test data cleanup by default
+		TestCleanupOnSetup:   true, // Cleanup on test setup by default
 		MigrationEnabled:     true,
 		MigrationPath:        "database/migrations", // Relative to project root
 		MigrationAutoMigrate: false,
 		MigrationTableName:   "schema_migrations",
-		LogLevel:         "debug",
-		ServerPort:       8080,
-		ServerHost:       "localhost",
-		Environment:      "test",
+		LogLevel:             "debug",
+		ServerPort:           8080,
+		ServerHost:           "localhost",
+		Environment:          "test",
 	}
 }
 
@@ -106,7 +106,7 @@ func TestConfig() *ContainerConfig {
 // DevelopmentConfig returns a configuration suitable for development
 func DevelopmentConfig() *ContainerConfig {
 	return &ContainerConfig{
-		StorageType:      "postgres",
+		StorageType: "postgres",
 		// Application database configuration (DML operations)
 		DatabaseHost:     "localhost",
 		DatabasePort:     5432,
@@ -121,10 +121,10 @@ func DevelopmentConfig() *ContainerConfig {
 		MigrationDatabaseUser:     "billing_migration_dev_user",
 		MigrationDatabasePassword: "billing_migration_dev_2025",
 		MigrationDatabaseSchema:   "billing",
-		LogLevel:         "debug",
-		ServerPort:       8080,
-		ServerHost:       "0.0.0.0",
-		Environment:      "development",
+		LogLevel:                  "debug",
+		ServerPort:                8080,
+		ServerHost:                "0.0.0.0",
+		Environment:               "development",
 	}
 }
 

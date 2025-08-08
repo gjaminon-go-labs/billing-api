@@ -40,7 +40,7 @@ func run() error {
 	}
 
 	command := os.Args[1]
-	
+
 	// Handle help command
 	if command == cmdHelp {
 		printUsage()
@@ -80,11 +80,11 @@ func run() error {
 		dbConfig.Port,
 		dbConfig.DBName,
 		dbConfig.SSLMode)
-	
+
 	if dbConfig.Schema != "" {
 		migrationConfig.DatabaseURL += "&search_path=" + dbConfig.Schema
 	}
-	
+
 	log.Printf("🔧 Database URL: %s", migrationConfig.DatabaseURL)
 	log.Printf("🔧 Schema: %s", migrationConfig.SchemaName)
 
@@ -206,18 +206,18 @@ func printUsage() {
 func init() {
 	log.SetFlags(log.LstdFlags)
 	log.SetPrefix("[MIGRATOR] ")
-	
+
 	// Parse global flags for configuration
 	var helpFlag = flag.Bool("help", false, "Show help")
 	var versionFlag = flag.Bool("version", false, "Show version")
-	
+
 	flag.Parse()
-	
+
 	if *helpFlag {
 		printUsage()
 		os.Exit(0)
 	}
-	
+
 	if *versionFlag {
 		fmt.Println("Database Migration CLI Tool v1.0.0")
 		os.Exit(0)

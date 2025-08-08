@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	
+
 	"github.com/gjaminon-go-labs/billing-api/internal/domain/entity"
 	domainErrors "github.com/gjaminon-go-labs/billing-api/internal/domain/errors"
 	"github.com/gjaminon-go-labs/billing-api/internal/domain/repository"
@@ -51,7 +51,7 @@ func (r *ClientRepositoryImpl) GetAll() ([]*entity.Client, error) {
 			err,
 		)
 	}
-	
+
 	// Convert storage values to domain entities
 	clients := make([]*entity.Client, 0, len(values))
 	for _, value := range values {
@@ -60,7 +60,7 @@ func (r *ClientRepositoryImpl) GetAll() ([]*entity.Client, error) {
 			clients = append(clients, client)
 			continue
 		}
-		
+
 		// Handle JSON deserialization (for PostgreSQL storage)
 		if clientMap, ok := value.(map[string]interface{}); ok {
 			client, err := r.deserializeClient(clientMap)
@@ -75,7 +75,7 @@ func (r *ClientRepositoryImpl) GetAll() ([]*entity.Client, error) {
 			clients = append(clients, client)
 		}
 	}
-	
+
 	return clients, nil
 }
 
@@ -86,13 +86,13 @@ func (r *ClientRepositoryImpl) deserializeClient(clientMap map[string]interface{
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal client map to JSON: %w", err)
 	}
-	
+
 	// Create a new client instance and unmarshal into it
 	var client entity.Client
 	if err := json.Unmarshal(jsonBytes, &client); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal JSON to client: %w", err)
 	}
-	
+
 	return &client, nil
 }
 
@@ -105,7 +105,7 @@ func (r *ClientRepositoryImpl) GetByID(id string) (*entity.Client, error) {
 		if errors.Is(err, storage.ErrKeyNotFound) {
 			return nil, domainErrors.ErrClientNotFound
 		}
-		
+
 		return nil, domainErrors.NewRepositoryError(
 			"get_client",
 			domainErrors.RepositoryInternal,
@@ -113,12 +113,12 @@ func (r *ClientRepositoryImpl) GetByID(id string) (*entity.Client, error) {
 			err,
 		)
 	}
-	
+
 	// Try direct type assertion first (for in-memory storage)
 	if client, ok := value.(*entity.Client); ok {
 		return client, nil
 	}
-	
+
 	// Handle JSON deserialization (for PostgreSQL storage)
 	if clientMap, ok := value.(map[string]interface{}); ok {
 		client, err := r.deserializeClient(clientMap)
@@ -132,7 +132,7 @@ func (r *ClientRepositoryImpl) GetByID(id string) (*entity.Client, error) {
 		}
 		return client, nil
 	}
-	
+
 	return nil, domainErrors.NewRepositoryError(
 		"get_client",
 		domainErrors.RepositoryInternal,
@@ -150,7 +150,7 @@ func (r *ClientRepositoryImpl) Delete(id string) error {
 		if errors.Is(err, storage.ErrKeyNotFound) {
 			return domainErrors.ErrClientNotFound
 		}
-		
+
 		return domainErrors.NewRepositoryError(
 			"delete_client",
 			domainErrors.RepositoryInternal,
@@ -158,6 +158,6 @@ func (r *ClientRepositoryImpl) Delete(id string) error {
 			err,
 		)
 	}
-	
+
 	return nil
 }

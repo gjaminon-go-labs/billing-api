@@ -9,33 +9,33 @@ package di
 import (
 	"sync"
 
+	httpserver "github.com/gjaminon-go-labs/billing-api/internal/api/http"
 	"github.com/gjaminon-go-labs/billing-api/internal/application"
 	"github.com/gjaminon-go-labs/billing-api/internal/domain/repository"
 	"github.com/gjaminon-go-labs/billing-api/internal/infrastructure/storage"
 	"github.com/gjaminon-go-labs/billing-api/internal/migration"
-	httpserver "github.com/gjaminon-go-labs/billing-api/internal/api/http"
 )
 
 // Container manages all application dependencies using lazy initialization
 type Container struct {
 	config *ContainerConfig
-	
+
 	// Singleton instances (created once, reused)
-	storage         storage.Storage
+	storage          storage.Storage
 	migrationService *migration.Service
-	clientRepo      repository.ClientRepository
-	billingService  *application.BillingService
-	httpServer      *httpserver.Server
-	
+	clientRepo       repository.ClientRepository
+	billingService   *application.BillingService
+	httpServer       *httpserver.Server
+
 	// Synchronization for thread-safe lazy initialization
-	storageOnce         sync.Once
+	storageOnce          sync.Once
 	migrationServiceOnce sync.Once
-	clientRepoOnce      sync.Once
-	billingServiceOnce  sync.Once
-	httpServerOnce      sync.Once
-	
+	clientRepoOnce       sync.Once
+	billingServiceOnce   sync.Once
+	httpServerOnce       sync.Once
+
 	// Error tracking for failed initializations
-	errors map[string]error
+	errors      map[string]error
 	errorsMutex sync.RWMutex
 }
 
@@ -57,7 +57,7 @@ func (c *Container) GetStorage() (storage.Storage, error) {
 		}
 		c.storage = storage
 	})
-	
+
 	if err := c.getError("storage"); err != nil {
 		return nil, err
 	}
@@ -74,7 +74,7 @@ func (c *Container) GetMigrationService() (*migration.Service, error) {
 		}
 		c.migrationService = service
 	})
-	
+
 	if err := c.getError("migration_service"); err != nil {
 		return nil, err
 	}
@@ -91,7 +91,7 @@ func (c *Container) GetClientRepository() (repository.ClientRepository, error) {
 		}
 		c.clientRepo = ClientRepositoryProvider(storage)
 	})
-	
+
 	if err := c.getError("client_repository"); err != nil {
 		return nil, err
 	}
@@ -108,7 +108,7 @@ func (c *Container) GetBillingService() (*application.BillingService, error) {
 		}
 		c.billingService = BillingServiceProvider(clientRepo)
 	})
-	
+
 	if err := c.getError("billing_service"); err != nil {
 		return nil, err
 	}
@@ -125,7 +125,7 @@ func (c *Container) GetHTTPServer() (*httpserver.Server, error) {
 		}
 		c.httpServer = HTTPServerProvider(billingService)
 	})
-	
+
 	if err := c.getError("http_server"); err != nil {
 		return nil, err
 	}
@@ -139,13 +139,13 @@ func (c *Container) Reset() {
 	c.clientRepo = nil
 	c.billingService = nil
 	c.httpServer = nil
-	
+
 	c.storageOnce = sync.Once{}
 	c.migrationServiceOnce = sync.Once{}
 	c.clientRepoOnce = sync.Once{}
 	c.billingServiceOnce = sync.Once{}
 	c.httpServerOnce = sync.Once{}
-	
+
 	c.errorsMutex.Lock()
 	c.errors = make(map[string]error)
 	c.errorsMutex.Unlock()
@@ -181,7 +181,7 @@ func (c *Container) HasErrors() bool {
 func (c *Container) GetErrors() map[string]error {
 	c.errorsMutex.RLock()
 	defer c.errorsMutex.RUnlock()
-	
+
 	// Return a copy to prevent concurrent access issues
 	errorsCopy := make(map[string]error)
 	for k, v := range c.errors {

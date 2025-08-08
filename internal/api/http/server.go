@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/gjaminon-go-labs/billing-api/internal/application"
 	"github.com/gjaminon-go-labs/billing-api/internal/api/http/handlers"
 	"github.com/gjaminon-go-labs/billing-api/internal/api/http/middleware"
+	"github.com/gjaminon-go-labs/billing-api/internal/application"
 )
 
 // Server represents the HTTP server with all dependencies
@@ -33,7 +33,7 @@ func (s *Server) SetupRoutes() http.Handler {
 
 	// Health check endpoint
 	mux.HandleFunc("/health", s.healthHandler.Health)
-	
+
 	// API routes
 	mux.HandleFunc("/api/v1/clients/", s.handleClientWithIDRoute) // Individual client operations
 	mux.HandleFunc("/api/v1/clients", s.handleClientsRoute)       // Collection operations
@@ -72,7 +72,7 @@ func (s *Server) handleClientWithIDRoute(w http.ResponseWriter, r *http.Request)
 		w.Write([]byte(`{"error":{"code":"INVALID_PATH","message":"Invalid client ID in path"},"success":false}`))
 		return
 	}
-	
+
 	// Route based on HTTP method
 	switch r.Method {
 	case http.MethodGet:
@@ -93,24 +93,24 @@ func (s *Server) handleClientWithIDRoute(w http.ResponseWriter, r *http.Request)
 func extractClientIDFromPath(path string) string {
 	// Expected path format: /api/v1/clients/{id}
 	const prefix = "/api/v1/clients/"
-	
+
 	if !strings.HasPrefix(path, prefix) {
 		return ""
 	}
-	
+
 	// Extract the ID part after the prefix
 	clientID := strings.TrimPrefix(path, prefix)
-	
+
 	// Remove any trailing slash or path segments
 	if slashIndex := strings.Index(clientID, "/"); slashIndex != -1 {
 		clientID = clientID[:slashIndex]
 	}
-	
+
 	// Basic validation - not empty
 	if strings.TrimSpace(clientID) == "" {
 		return ""
 	}
-	
+
 	return clientID
 }
 

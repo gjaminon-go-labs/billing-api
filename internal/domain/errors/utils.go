@@ -34,17 +34,17 @@ func GetErrorCode(err error) ErrorCode {
 	if errors.As(err, &validationErr) {
 		return validationErr.ErrorCode()
 	}
-	
+
 	var businessErr *BusinessRuleError
 	if errors.As(err, &businessErr) {
 		return businessErr.ErrorCode()
 	}
-	
+
 	var repoErr *RepositoryError
 	if errors.As(err, &repoErr) {
 		return repoErr.ErrorCode()
 	}
-	
+
 	return ""
 }
 
@@ -54,22 +54,22 @@ func GetUserMessage(err error) string {
 	if errors.As(err, &validationErr) {
 		return validationErr.UserMessage()
 	}
-	
+
 	var validationErrs *ValidationErrors
 	if errors.As(err, &validationErrs) {
 		return validationErrs.UserMessage()
 	}
-	
+
 	var businessErr *BusinessRuleError
 	if errors.As(err, &businessErr) {
 		return businessErr.UserMessage()
 	}
-	
+
 	var repoErr *RepositoryError
 	if errors.As(err, &repoErr) {
 		return repoErr.UserMessage()
 	}
-	
+
 	// Fallback for unstructured errors
 	return "An error occurred"
 }

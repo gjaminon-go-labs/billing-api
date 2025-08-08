@@ -7,9 +7,9 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/gjaminon-go-labs/billing-api/internal/domain/entity"
 	"github.com/gjaminon-go-labs/billing-api/tests/testhelpers"
+	"github.com/stretchr/testify/assert"
 )
 
 // BUSINESS_TITLE: Database Client Retrieval
@@ -21,16 +21,16 @@ func TestClientRepository_GetAll_IntegrationTest(t *testing.T) {
 	// Arrange
 	stack := testhelpers.NewCleanIntegrationTestStack()
 	repo := stack.ClientRepo
-	
+
 	// Load test fixtures
 	fixtures := loadIntegrationRepositoryFixtures(t)
-	
+
 	// Create and save test clients from fixtures
 	client1, err := entity.NewClient(fixtures[0].Name, fixtures[0].Email, fixtures[0].Phone, fixtures[0].Address)
 	assert.NoError(t, err)
 	err = repo.Save(client1)
 	assert.NoError(t, err)
-	
+
 	client2, err := entity.NewClient(fixtures[1].Name, fixtures[1].Email, fixtures[1].Phone, fixtures[1].Address)
 	assert.NoError(t, err)
 	err = repo.Save(client2)
@@ -43,14 +43,14 @@ func TestClientRepository_GetAll_IntegrationTest(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, clients)
 	assert.Len(t, clients, 2)
-	
+
 	// Verify clients are present (order may vary)
 	expectedEmails := []string{fixtures[0].Email, fixtures[1].Email}
 	actualEmails := make([]string, len(clients))
 	for i, client := range clients {
 		actualEmails[i] = client.EmailString()
 	}
-	
+
 	for _, expectedEmail := range expectedEmails {
 		assert.Contains(t, actualEmails, expectedEmail)
 	}
@@ -86,18 +86,18 @@ func loadIntegrationRepositoryFixtures(t *testing.T) []ClientFixture {
 	// Get current file directory
 	_, currentFile, _, ok := runtime.Caller(0)
 	assert.True(t, ok, "Failed to get current file path")
-	
+
 	// Build path to fixture data
 	testDataPath := filepath.Join(filepath.Dir(currentFile), "..", "..", "testdata", "client", "client_fixtures.json")
-	
+
 	// Read fixture data file
 	data, err := os.ReadFile(testDataPath)
 	assert.NoError(t, err, "Failed to read fixture data file")
-	
+
 	// Parse JSON
 	var fixtures []ClientFixture
 	err = json.Unmarshal(data, &fixtures)
 	assert.NoError(t, err, "Failed to parse fixture data JSON")
-	
+
 	return fixtures
 }

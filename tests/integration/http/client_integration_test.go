@@ -8,7 +8,7 @@
 // Test Scenarios:
 // - End-to-end HTTP POST requests with real network calls
 // - Complete server routing and middleware stack
-// - Request/response JSON processing 
+// - Request/response JSON processing
 // - Multi-request persistence across HTTP calls
 // - Success and failure response structure validation
 // - Uses external JSON test data for comprehensive scenarios
@@ -18,7 +18,7 @@
 // - Middleware (CORS, logging, error handling)
 // - ClientHandler (API layer)
 // - BillingService (application layer)
-// - ClientRepository (repository pattern) 
+// - ClientRepository (repository pattern)
 // - InMemoryStorage (test infrastructure)
 // - Test helpers (NewInMemoryTestServer)
 package http
@@ -33,9 +33,9 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/gjaminon-go-labs/billing-api/internal/api/http/dtos"
 	"github.com/gjaminon-go-labs/billing-api/tests/testhelpers"
+	"github.com/stretchr/testify/assert"
 )
 
 // BUSINESS_TITLE: End-to-End Client Creation
@@ -46,10 +46,10 @@ import (
 func TestHTTPServer_Integration_CreateClient(t *testing.T) {
 	// Load test data using shared helper function
 	testCases := loadHTTPIntegrationTestCases(t)
-	
+
 	// Set up complete HTTP server using InMemory test helpers
 	server := testhelpers.NewInMemoryTestServer()
-	
+
 	// Create test server
 	testServer := httptest.NewServer(server.Handler())
 	defer testServer.Close()
@@ -81,12 +81,12 @@ func TestHTTPServer_Integration_CreateClient(t *testing.T) {
 				// Check success response structure
 				assert.True(t, responseBody["success"].(bool), "Response should indicate success")
 				assert.Contains(t, responseBody, "data", "Success response should contain data")
-				
+
 				// Check client data structure
 				data := responseBody["data"].(map[string]interface{})
 				assert.Contains(t, data, "id", "Client data should contain ID")
 				assert.NotEmpty(t, data["id"], "Client ID should not be empty")
-				
+
 				// Verify data matches request
 				assert.Equal(t, testCase.RequestBody.Name, data["name"])
 				assert.Equal(t, testCase.RequestBody.Email, data["email"])
@@ -100,12 +100,12 @@ func TestHTTPServer_Integration_CreateClient(t *testing.T) {
 				// Check error response structure
 				assert.False(t, responseBody["success"].(bool), "Response should indicate failure")
 				assert.Contains(t, responseBody, "error", "Error response should contain error")
-				
+
 				// Check error structure
 				errorDetail := responseBody["error"].(map[string]interface{})
 				assert.Contains(t, errorDetail, "code", "Error should contain code")
 				assert.Contains(t, errorDetail, "message", "Error should contain message")
-				
+
 				// Check expected error code if specified
 				if testCase.ExpectedErrorCode != "" {
 					assert.Equal(t, testCase.ExpectedErrorCode, errorDetail["code"])
@@ -123,14 +123,14 @@ func TestHTTPServer_Integration_CreateClient(t *testing.T) {
 func TestHTTPServer_Integration_PersistenceAcrossRequests(t *testing.T) {
 	// Set up complete HTTP server using InMemory test helpers (shared storage)
 	server := testhelpers.NewInMemoryTestServer()
-	
+
 	// Create test server
 	testServer := httptest.NewServer(server.Handler())
 	defer testServer.Close()
 
 	// Load test fixtures for persistence test
 	fixtures := loadHTTPIntegrationFixtures(t)
-	
+
 	// Create first client from fixture
 	firstClient := dtos.CreateClientRequest{
 		Name:    fixtures[0].Name,
@@ -139,7 +139,7 @@ func TestHTTPServer_Integration_PersistenceAcrossRequests(t *testing.T) {
 		Address: fixtures[0].Address,
 	}
 	requestBody, _ := json.Marshal(firstClient)
-	
+
 	resp1, err := http.Post(testServer.URL+"/api/v1/clients", "application/json", bytes.NewReader(requestBody))
 	assert.NoError(t, err)
 	defer resp1.Body.Close()
@@ -153,7 +153,7 @@ func TestHTTPServer_Integration_PersistenceAcrossRequests(t *testing.T) {
 		Address: fixtures[1].Address,
 	}
 	requestBody, _ = json.Marshal(secondClient)
-	
+
 	resp2, err := http.Post(testServer.URL+"/api/v1/clients", "application/json", bytes.NewReader(requestBody))
 	assert.NoError(t, err)
 	defer resp2.Body.Close()
@@ -163,10 +163,10 @@ func TestHTTPServer_Integration_PersistenceAcrossRequests(t *testing.T) {
 	var response1, response2 map[string]interface{}
 	json.NewDecoder(resp1.Body).Decode(&response1)
 	json.NewDecoder(resp2.Body).Decode(&response2)
-	
+
 	data1 := response1["data"].(map[string]interface{})
 	data2 := response2["data"].(map[string]interface{})
-	
+
 	assert.NotEqual(t, data1["id"], data2["id"], "Different clients should have different IDs")
 	assert.Equal(t, fixtures[0].Name, data1["name"])
 	assert.Equal(t, fixtures[1].Name, data2["name"])
@@ -183,18 +183,18 @@ func loadHTTPIntegrationFixtures(t *testing.T) []ClientFixture {
 	// Get current file directory
 	_, currentFile, _, ok := runtime.Caller(0)
 	assert.True(t, ok, "Failed to get current file path")
-	
-	// Build path to fixture data  
+
+	// Build path to fixture data
 	testDataPath := filepath.Join(filepath.Dir(currentFile), "..", "..", "testdata", "client", "http_integration_fixtures.json")
-	
+
 	// Read fixture data file
 	data, err := os.ReadFile(testDataPath)
 	assert.NoError(t, err, "Failed to read fixture data file")
-	
+
 	// Parse JSON
 	var fixtures []ClientFixture
 	err = json.Unmarshal(data, &fixtures)
 	assert.NoError(t, err, "Failed to parse fixture data JSON")
-	
+
 	return fixtures
 }

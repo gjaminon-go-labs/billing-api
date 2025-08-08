@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/gjaminon-go-labs/billing-api/internal/api/http/dtos"
 	"github.com/gjaminon-go-labs/billing-api/internal/application"
 	"github.com/gjaminon-go-labs/billing-api/internal/domain/entity"
 	"github.com/gjaminon-go-labs/billing-api/internal/domain/errors"
-	"github.com/gjaminon-go-labs/billing-api/internal/api/http/dtos"
 )
 
 // ClientHandler handles HTTP requests for client operations
@@ -92,13 +92,13 @@ func (h *ClientHandler) handleDomainError(w http.ResponseWriter, err error) {
 	if errors.IsValidationError(err) || errors.IsValidationErrors(err) {
 		code := string(errors.GetErrorCode(err))
 		message := errors.GetUserMessage(err)
-		
+
 		// Try to extract field information from validation error
 		var field string
 		if validationErr, ok := err.(*errors.ValidationError); ok {
 			field = validationErr.Field
 		}
-		
+
 		h.writeErrorResponse(w, http.StatusBadRequest, code, message, field)
 		return
 	}
@@ -113,7 +113,7 @@ func (h *ClientHandler) handleDomainError(w http.ResponseWriter, err error) {
 	if errors.IsRepositoryError(err) {
 		code := errors.GetErrorCode(err)
 		message := errors.GetUserMessage(err)
-		
+
 		// Map specific repository error codes to appropriate HTTP status codes
 		var statusCode int
 		switch code {
@@ -124,7 +124,7 @@ func (h *ClientHandler) handleDomainError(w http.ResponseWriter, err error) {
 		default:
 			statusCode = http.StatusInternalServerError
 		}
-		
+
 		h.writeErrorResponse(w, statusCode, string(code), message, "")
 		return
 	}

@@ -15,11 +15,11 @@ package errors
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/gjaminon-go-labs/billing-api/internal/application"
 	"github.com/gjaminon-go-labs/billing-api/internal/domain/errors"
 	"github.com/gjaminon-go-labs/billing-api/internal/infrastructure/repository"
 	"github.com/gjaminon-go-labs/billing-api/tests/infrastructure"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestErrorHandling_ValidationError(t *testing.T) {
@@ -34,17 +34,17 @@ func TestErrorHandling_ValidationError(t *testing.T) {
 	// Assert
 	assert.Error(t, err)
 	assert.Nil(t, client)
-	
+
 	// Check if it's a ValidationError
 	assert.True(t, errors.IsValidationError(err))
-	
+
 	// Check error code
 	assert.Equal(t, errors.ValidationRequired, errors.GetErrorCode(err))
-	
+
 	// Check user message
 	userMsg := errors.GetUserMessage(err)
 	assert.Contains(t, userMsg, "email is required")
-	
+
 	// Check if it's a client error (not server error)
 	assert.True(t, errors.IsClientError(err))
 	assert.False(t, errors.IsServerError(err))
@@ -62,13 +62,13 @@ func TestErrorHandling_FormatValidationError(t *testing.T) {
 	// Assert
 	assert.Error(t, err)
 	assert.Nil(t, client)
-	
+
 	// Check if it's a ValidationError
 	assert.True(t, errors.IsValidationError(err))
-	
+
 	// Check error code
 	assert.Equal(t, errors.ValidationFormat, errors.GetErrorCode(err))
-	
+
 	// Check user message
 	userMsg := errors.GetUserMessage(err)
 	assert.Contains(t, userMsg, "email must contain @ symbol")

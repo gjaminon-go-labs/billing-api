@@ -57,18 +57,18 @@ type ServerConfig struct {
 
 // DatabaseConfig defines database connection configuration
 type DatabaseConfig struct {
-	Host               string        `yaml:"host"`
-	Port               int           `yaml:"port"`
-	User               string        `yaml:"user"`
-	Password           string        `yaml:"password"`
-	DBName             string        `yaml:"dbname"`
-	Schema             string        `yaml:"schema"`
-	SSLMode            string        `yaml:"sslmode"`
-	MaxOpenConns       int           `yaml:"max_open_conns"`
-	MaxIdleConns       int           `yaml:"max_idle_conns"`
-	ConnMaxLifetime    time.Duration `yaml:"conn_max_lifetime"`
-	ConnMaxIdleTime    time.Duration `yaml:"conn_max_idle_time"`
-	LogLevel           string        `yaml:"log_level"`
+	Host            string        `yaml:"host"`
+	Port            int           `yaml:"port"`
+	User            string        `yaml:"user"`
+	Password        string        `yaml:"password"`
+	DBName          string        `yaml:"dbname"`
+	Schema          string        `yaml:"schema"`
+	SSLMode         string        `yaml:"sslmode"`
+	MaxOpenConns    int           `yaml:"max_open_conns"`
+	MaxIdleConns    int           `yaml:"max_idle_conns"`
+	ConnMaxLifetime time.Duration `yaml:"conn_max_lifetime"`
+	ConnMaxIdleTime time.Duration `yaml:"conn_max_idle_time"`
+	LogLevel        string        `yaml:"log_level"`
 }
 
 // LoggingConfig defines logging configuration
@@ -151,7 +151,7 @@ func loadBaseConfig() (*Config, error) {
 // loadEnvironmentConfig loads environment-specific configuration overrides
 func loadEnvironmentConfig(config *Config, environment string) error {
 	configPath := getConfigPath(environment + ".yaml")
-	
+
 	// Check if environment config exists
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
 		// Environment config is optional
@@ -189,7 +189,7 @@ func getConfigPath(filename string) string {
 	if configDir := os.Getenv("CONFIG_DIR"); configDir != "" {
 		return filepath.Join(configDir, filename)
 	}
-	
+
 	// Default to configs directory relative to project root
 	return filepath.Join("configs", filename)
 }
@@ -264,12 +264,12 @@ func applyEnvironmentVariables(config *Config) {
 func mergeConfigs(target, source *Config) {
 	// Note: This is a simplified merge - in production you might want
 	// a more sophisticated merging strategy using reflection or a library
-	
+
 	// Storage config
 	if source.Storage.Type != "" {
 		target.Storage.Type = source.Storage.Type
 	}
-	
+
 	// Migration config
 	if source.Migration.Path != "" {
 		target.Migration.Path = source.Migration.Path
@@ -280,7 +280,7 @@ func mergeConfigs(target, source *Config) {
 	// Note: bool fields are merged only if explicitly set in source
 	target.Migration.Enabled = source.Migration.Enabled || target.Migration.Enabled
 	target.Migration.AutoMigrate = source.Migration.AutoMigrate || target.Migration.AutoMigrate
-	
+
 	// Server config
 	if source.Server.Port != 0 {
 		target.Server.Port = source.Server.Port
@@ -288,7 +288,7 @@ func mergeConfigs(target, source *Config) {
 	if source.Server.Host != "" {
 		target.Server.Host = source.Server.Host
 	}
-	
+
 	// Database config
 	if source.Database.Host != "" {
 		target.Database.Host = source.Database.Host
@@ -308,7 +308,7 @@ func mergeConfigs(target, source *Config) {
 	if source.Database.Schema != "" {
 		target.Database.Schema = source.Database.Schema
 	}
-	
+
 	// Migration database config
 	if source.MigrationDatabase.Host != "" {
 		target.MigrationDatabase.Host = source.MigrationDatabase.Host
@@ -331,7 +331,7 @@ func mergeConfigs(target, source *Config) {
 	if source.MigrationDatabase.SSLMode != "" {
 		target.MigrationDatabase.SSLMode = source.MigrationDatabase.SSLMode
 	}
-	
+
 	// Logging config
 	if source.Logging.Level != "" {
 		target.Logging.Level = source.Logging.Level
@@ -348,12 +348,12 @@ func validateConfig(config *Config) error {
 	if !contains(validStorageTypes, config.Storage.Type) {
 		return fmt.Errorf("invalid storage type: %s (must be one of: %s)", config.Storage.Type, strings.Join(validStorageTypes, ", "))
 	}
-	
+
 	// Server validation
 	if config.Server.Port <= 0 || config.Server.Port > 65535 {
 		return fmt.Errorf("invalid server port: %d", config.Server.Port)
 	}
-	
+
 	// Database validation
 	if config.Database.Host == "" {
 		return fmt.Errorf("database host is required")
@@ -367,13 +367,13 @@ func validateConfig(config *Config) error {
 	if config.Database.DBName == "" {
 		return fmt.Errorf("database name is required")
 	}
-	
+
 	// Logging validation
 	validLogLevels := []string{"debug", "info", "warn", "error", "fatal"}
 	if !contains(validLogLevels, strings.ToLower(config.Logging.Level)) {
 		return fmt.Errorf("invalid log level: %s", config.Logging.Level)
 	}
-	
+
 	return nil
 }
 

@@ -31,17 +31,17 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/gjaminon-go-labs/billing-api/internal/api/http/dtos"
 	"github.com/gjaminon-go-labs/billing-api/tests/testhelpers"
+	"github.com/stretchr/testify/assert"
 )
 
 type HTTPTestCase struct {
-	Description        string                  `json:"description"`
-	RequestBody        dtos.CreateClientRequest `json:"request_body"`
-	ExpectedStatus     int                     `json:"expected_status"`
-	ShouldSucceed      bool                    `json:"should_succeed"`
-	ExpectedErrorCode  string                  `json:"expected_error_code,omitempty"`
+	Description       string                   `json:"description"`
+	RequestBody       dtos.CreateClientRequest `json:"request_body"`
+	ExpectedStatus    int                      `json:"expected_status"`
+	ShouldSucceed     bool                     `json:"should_succeed"`
+	ExpectedErrorCode string                   `json:"expected_error_code,omitempty"`
 }
 
 // BUSINESS_TITLE: Create New Client via API
@@ -52,7 +52,7 @@ type HTTPTestCase struct {
 func TestClientHandler_CreateClient(t *testing.T) {
 	// Load test data
 	testCases := loadHTTPTestCases(t)
-	
+
 	// Set up integration test server with PostgreSQL storage
 	server := testhelpers.NewIntegrationTestServer()
 
@@ -65,7 +65,7 @@ func TestClientHandler_CreateClient(t *testing.T) {
 
 			req := httptest.NewRequest(http.MethodPost, "/api/v1/clients", bytes.NewReader(requestBody))
 			req.Header.Set("Content-Type", "application/json")
-			
+
 			// Create response recorder
 			rr := httptest.NewRecorder()
 
@@ -84,7 +84,7 @@ func TestClientHandler_CreateClient(t *testing.T) {
 				// Check success response structure
 				assert.True(t, responseBody["success"].(bool), "Response should indicate success")
 				assert.Contains(t, responseBody, "data", "Success response should contain data")
-				
+
 				// Check client data structure
 				data := responseBody["data"].(map[string]interface{})
 				assert.Contains(t, data, "id", "Client data should contain ID")
@@ -92,7 +92,7 @@ func TestClientHandler_CreateClient(t *testing.T) {
 				assert.Contains(t, data, "email", "Client data should contain email")
 				assert.Contains(t, data, "created_at", "Client data should contain created_at")
 				assert.Contains(t, data, "updated_at", "Client data should contain updated_at")
-				
+
 				// Verify data matches request
 				assert.Equal(t, testCase.RequestBody.Name, data["name"])
 				assert.Equal(t, testCase.RequestBody.Email, data["email"])
@@ -100,12 +100,12 @@ func TestClientHandler_CreateClient(t *testing.T) {
 				// Check error response structure
 				assert.False(t, responseBody["success"].(bool), "Response should indicate failure")
 				assert.Contains(t, responseBody, "error", "Error response should contain error")
-				
+
 				// Check error structure
 				errorDetail := responseBody["error"].(map[string]interface{})
 				assert.Contains(t, errorDetail, "code", "Error should contain code")
 				assert.Contains(t, errorDetail, "message", "Error should contain message")
-				
+
 				// Check expected error code if specified
 				if testCase.ExpectedErrorCode != "" {
 					assert.Equal(t, testCase.ExpectedErrorCode, errorDetail["code"])
@@ -176,18 +176,18 @@ func loadHTTPTestCases(t *testing.T) []HTTPTestCase {
 	// Get current file directory
 	_, currentFile, _, ok := runtime.Caller(0)
 	assert.True(t, ok, "Failed to get current file path")
-	
+
 	// Build path to HTTP test data
 	testDataPath := filepath.Join(filepath.Dir(currentFile), "..", "..", "testdata", "http", "create_client_requests.json")
-	
+
 	// Read test data file
 	data, err := os.ReadFile(testDataPath)
 	assert.NoError(t, err, "Failed to read HTTP test data file")
-	
+
 	// Parse JSON
 	var testCases []HTTPTestCase
 	err = json.Unmarshal(data, &testCases)
 	assert.NoError(t, err, "Failed to parse HTTP test data JSON")
-	
+
 	return testCases
 }

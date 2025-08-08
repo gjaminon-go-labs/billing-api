@@ -13,12 +13,12 @@ package testhelpers
 
 import (
 	"fmt"
-	
+
+	httpserver "github.com/gjaminon-go-labs/billing-api/internal/api/http"
 	"github.com/gjaminon-go-labs/billing-api/internal/application"
 	"github.com/gjaminon-go-labs/billing-api/internal/di"
 	"github.com/gjaminon-go-labs/billing-api/internal/domain/repository"
 	"github.com/gjaminon-go-labs/billing-api/internal/infrastructure/storage"
-	httpserver "github.com/gjaminon-go-labs/billing-api/internal/api/http"
 )
 
 // TestContainer provides a shared DI container for unit tests (singleton pattern)
@@ -89,7 +89,7 @@ func NewIntegrationTestContainer() *di.Container {
 func NewIntegrationTestServer() *httpserver.Server {
 	container := NewIntegrationTestContainer()
 	config := container.GetConfig()
-	
+
 	// Clean up test data if enabled in configuration
 	if config.TestCleanupEnabled && config.TestCleanupOnSetup {
 		stack := createTestStack(container)
@@ -99,7 +99,7 @@ func NewIntegrationTestServer() *httpserver.Server {
 			}
 		}
 	}
-	
+
 	server, err := container.GetHTTPServer()
 	if err != nil {
 		panic("Failed to create integration test server: " + err.Error())
@@ -137,12 +137,12 @@ func NewIsolatedIntegrationTestServer() *httpserver.Server {
 
 // TestStack provides access to all components in the DI container
 type TestStack struct {
-	Container      *di.Container
-	Storage        storage.Storage
-	ClientRepo     repository.ClientRepository
-	BillingService *application.BillingService
-	HTTPServer     *httpserver.Server
-	DatabaseCleaner *DatabaseCleaner  // Added for test data cleanup
+	Container       *di.Container
+	Storage         storage.Storage
+	ClientRepo      repository.ClientRepository
+	BillingService  *application.BillingService
+	HTTPServer      *httpserver.Server
+	DatabaseCleaner *DatabaseCleaner // Added for test data cleanup
 }
 
 // NewUnitTestStack creates a complete unit test stack using DI container
@@ -173,9 +173,9 @@ func NewIsolatedTestStack() *TestStack {
 func NewIntegrationTestStack() *TestStack {
 	container := NewIntegrationTestContainer()
 	config := container.GetConfig()
-	
+
 	stack := createTestStack(container)
-	
+
 	// Clean up test data if enabled in configuration
 	if config.TestCleanupEnabled && config.TestCleanupOnSetup {
 		if stack.DatabaseCleaner != nil {
@@ -184,7 +184,7 @@ func NewIntegrationTestStack() *TestStack {
 			}
 		}
 	}
-	
+
 	return stack
 }
 
@@ -195,22 +195,22 @@ func createTestStack(container *di.Container) *TestStack {
 	if err != nil {
 		panic("Failed to get storage: " + err.Error())
 	}
-	
+
 	clientRepo, err := container.GetClientRepository()
 	if err != nil {
 		panic("Failed to get client repository: " + err.Error())
 	}
-	
+
 	billingService, err := container.GetBillingService()
 	if err != nil {
 		panic("Failed to get billing service: " + err.Error())
 	}
-	
+
 	httpServer, err := container.GetHTTPServer()
 	if err != nil {
 		panic("Failed to get HTTP server: " + err.Error())
 	}
-	
+
 	// Create database cleaner if using PostgreSQL storage
 	var dbCleaner *DatabaseCleaner
 	if postgresStorage, ok := stor.(*storage.PostgreSQLStorage); ok {
@@ -220,7 +220,7 @@ func createTestStack(container *di.Container) *TestStack {
 			dbCleaner = NewDatabaseCleaner(db)
 		}
 	}
-	
+
 	return &TestStack{
 		Container:       container,
 		Storage:         stor,
@@ -269,14 +269,14 @@ func WithIntegrationDependencies() *httpserver.Server {
 // This function automatically cleans up test data before returning the server
 func NewCleanIntegrationTestServer() *httpserver.Server {
 	stack := NewIntegrationTestStack()
-	
+
 	// Clean up any existing test data
 	if stack.DatabaseCleaner != nil {
 		if err := stack.DatabaseCleaner.CleanupTestData(); err != nil {
 			panic("Failed to cleanup test data: " + err.Error())
 		}
 	}
-	
+
 	return stack.HTTPServer
 }
 
@@ -284,14 +284,14 @@ func NewCleanIntegrationTestServer() *httpserver.Server {
 // This function automatically cleans up test data before returning the stack
 func NewCleanIntegrationTestStack() *TestStack {
 	stack := NewIntegrationTestStack()
-	
+
 	// Clean up any existing test data
 	if stack.DatabaseCleaner != nil {
 		if err := stack.DatabaseCleaner.CleanupTestData(); err != nil {
 			panic("Failed to cleanup test data: " + err.Error())
 		}
 	}
-	
+
 	return stack
 }
 
@@ -317,10 +317,10 @@ func NewIntegrationTestStackNoCleanup() *TestStack {
 // Use this in test setup/teardown when you need manual control over cleanup timing
 func CleanupIntegrationTestData() error {
 	stack := NewIntegrationTestStackNoCleanup()
-	
+
 	if stack.DatabaseCleaner == nil {
 		return fmt.Errorf("database cleaner not available - not using PostgreSQL storage")
 	}
-	
+
 	return stack.DatabaseCleaner.CleanupTestData()
 }

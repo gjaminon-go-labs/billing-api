@@ -10,20 +10,20 @@ type ErrorCode string
 
 const (
 	// Validation error codes
-	ValidationRequired    ErrorCode = "VALIDATION_REQUIRED"
-	ValidationFormat      ErrorCode = "VALIDATION_FORMAT"
-	ValidationLength      ErrorCode = "VALIDATION_LENGTH"
-	ValidationRange       ErrorCode = "VALIDATION_RANGE"
-	
+	ValidationRequired ErrorCode = "VALIDATION_REQUIRED"
+	ValidationFormat   ErrorCode = "VALIDATION_FORMAT"
+	ValidationLength   ErrorCode = "VALIDATION_LENGTH"
+	ValidationRange    ErrorCode = "VALIDATION_RANGE"
+
 	// Business rule error codes
 	BusinessRuleViolation ErrorCode = "BUSINESS_RULE_VIOLATION"
 	BusinessRuleConflict  ErrorCode = "BUSINESS_RULE_CONFLICT"
-	
+
 	// Repository error codes
-	RepositoryNotFound    ErrorCode = "REPOSITORY_NOT_FOUND"
-	RepositoryConnection  ErrorCode = "REPOSITORY_CONNECTION"
-	RepositoryConstraint  ErrorCode = "REPOSITORY_CONSTRAINT"
-	RepositoryInternal    ErrorCode = "REPOSITORY_INTERNAL"
+	RepositoryNotFound   ErrorCode = "REPOSITORY_NOT_FOUND"
+	RepositoryConnection ErrorCode = "REPOSITORY_CONNECTION"
+	RepositoryConstraint ErrorCode = "REPOSITORY_CONSTRAINT"
+	RepositoryInternal   ErrorCode = "REPOSITORY_INTERNAL"
 )
 
 // ValidationError represents input validation failures
@@ -148,7 +148,7 @@ func (e ValidationErrors) Error() string {
 	if len(e.Errors) == 0 {
 		return "validation failed"
 	}
-	
+
 	var messages []string
 	for _, err := range e.Errors {
 		messages = append(messages, err.Error())
@@ -160,7 +160,7 @@ func (e ValidationErrors) UserMessage() string {
 	if len(e.Errors) == 0 {
 		return "Please check your input"
 	}
-	
+
 	var messages []string
 	for _, err := range e.Errors {
 		messages = append(messages, err.UserMessage())
@@ -194,7 +194,7 @@ func NewValidationErrors() *ValidationErrors {
 var (
 	// ErrClientNotFound represents a client not found error
 	ErrClientNotFound = NewRepositoryError("get_client", RepositoryNotFound, "client not found", nil)
-	
+
 	// ErrClientEmailExists represents a client email uniqueness violation
 	ErrClientEmailExists = NewBusinessRuleError("email_uniqueness", BusinessRuleConflict, "email address already exists")
 )

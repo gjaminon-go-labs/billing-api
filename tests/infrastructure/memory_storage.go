@@ -24,7 +24,7 @@ func NewInMemoryStorage() *InMemoryStorage {
 func (s *InMemoryStorage) Store(key string, value interface{}) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
-	
+
 	s.data[key] = value
 	return nil
 }
@@ -33,12 +33,12 @@ func (s *InMemoryStorage) Store(key string, value interface{}) error {
 func (s *InMemoryStorage) Get(key string) (interface{}, error) {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
-	
+
 	value, exists := s.data[key]
 	if !exists {
 		return nil, fmt.Errorf("%w: %s", storage.ErrKeyNotFound, key)
 	}
-	
+
 	return value, nil
 }
 
@@ -46,7 +46,7 @@ func (s *InMemoryStorage) Get(key string) (interface{}, error) {
 func (s *InMemoryStorage) Exists(key string) bool {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
-	
+
 	_, exists := s.data[key]
 	return exists
 }
@@ -55,12 +55,12 @@ func (s *InMemoryStorage) Exists(key string) bool {
 func (s *InMemoryStorage) ListAll() ([]interface{}, error) {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
-	
+
 	values := make([]interface{}, 0, len(s.data))
 	for _, value := range s.data {
 		values = append(values, value)
 	}
-	
+
 	return values, nil
 }
 
@@ -68,11 +68,11 @@ func (s *InMemoryStorage) ListAll() ([]interface{}, error) {
 func (s *InMemoryStorage) Delete(key string) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
-	
+
 	if _, exists := s.data[key]; !exists {
 		return fmt.Errorf("%w: %s", storage.ErrKeyNotFound, key)
 	}
-	
+
 	delete(s.data, key)
 	return nil
 }

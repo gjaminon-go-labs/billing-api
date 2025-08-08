@@ -72,7 +72,7 @@ func run() error {
 
 	// 6. Set up signal handling for Kubernetes
 	signals := make(chan os.Signal, 1)
-	signal.Notify(signals, 
+	signal.Notify(signals,
 		syscall.SIGTERM, // Kubernetes graceful shutdown signal
 		syscall.SIGINT,  // Ctrl+C for local development
 	)
@@ -108,12 +108,12 @@ func gracefulShutdown(server *http.Server, timeout time.Duration) error {
 
 	// Phase 1: Stop accepting new requests (0-5 seconds)
 	log.Println("📤 Stopping acceptance of new requests...")
-	
+
 	// Phase 2: Shutdown server with connection draining (5-25 seconds)
 	log.Println("🔄 Draining existing connections...")
 	if err := server.Shutdown(ctx); err != nil {
 		log.Printf("❌ Force closing server due to timeout: %v", err)
-		
+
 		// Phase 3: Force close if timeout exceeded (25-30 seconds)
 		log.Println("🔨 Force closing remaining connections...")
 		return server.Close()
@@ -124,15 +124,15 @@ func gracefulShutdown(server *http.Server, timeout time.Duration) error {
 }
 
 // Development notes:
-// 
+//
 // This main.go is designed for Kubernetes deployment with:
-// 
+//
 // 1. **SIGTERM Handling**: Kubernetes sends SIGTERM for graceful shutdown
 // 2. **SIGINT Handling**: For local development (Ctrl+C)
 // 3. **SIGKILL**: Cannot be caught - Kubernetes sends after grace period
-// 
+//
 // 4. **Graceful Shutdown Timeline** (default 30s Kubernetes grace period):
-//    - 0-5s:   Stop accepting new requests  
+//    - 0-5s:   Stop accepting new requests
 //    - 5-25s:  Drain existing connections
 //    - 25-30s: Force close remaining connections
 //    - 30s+:   Kubernetes sends SIGKILL (force termination)
@@ -142,7 +142,7 @@ func gracefulShutdown(server *http.Server, timeout time.Duration) error {
 //    - Environment-specific YAML (development.yaml, production.yaml)
 //    - Base YAML (base.yaml)
 //
-// 6. **Health Checks**: 
+// 6. **Health Checks**:
 //    - Readiness: /health (available after successful startup)
 //    - Liveness: /health (available during normal operation)
 //

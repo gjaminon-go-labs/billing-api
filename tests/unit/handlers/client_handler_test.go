@@ -9,11 +9,11 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/gjaminon-go-labs/billing-api/internal/api/http/handlers"
 	"github.com/gjaminon-go-labs/billing-api/internal/application"
 	"github.com/gjaminon-go-labs/billing-api/internal/infrastructure/repository"
 	"github.com/gjaminon-go-labs/billing-api/tests/infrastructure"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestClientHandler_ListClients_GET_EmptyList(t *testing.T) {
@@ -32,7 +32,7 @@ func TestClientHandler_ListClients_GET_EmptyList(t *testing.T) {
 	// Assert
 	assert.Equal(t, http.StatusOK, rr.Code)
 	assert.Equal(t, "application/json", rr.Header().Get("Content-Type"))
-	
+
 	// Check response body contains empty array
 	assert.Contains(t, rr.Body.String(), `"data":[]`)
 	assert.Contains(t, rr.Body.String(), `"success":true`)
@@ -47,11 +47,11 @@ func TestClientHandler_ListClients_GET_WithClients(t *testing.T) {
 
 	// Load test fixtures
 	fixtures := loadHandlerTestFixtures(t)
-	
+
 	// Create test clients from fixtures
 	_, err := billingService.CreateClient(fixtures[0].Name, fixtures[0].Email, fixtures[0].Phone, fixtures[0].Address)
 	assert.NoError(t, err)
-	
+
 	_, err = billingService.CreateClient(fixtures[1].Name, fixtures[1].Email, fixtures[1].Phone, fixtures[1].Address)
 	assert.NoError(t, err)
 
@@ -64,7 +64,7 @@ func TestClientHandler_ListClients_GET_WithClients(t *testing.T) {
 	// Assert
 	assert.Equal(t, http.StatusOK, rr.Code)
 	assert.Equal(t, "application/json", rr.Header().Get("Content-Type"))
-	
+
 	// Check response contains both clients
 	responseBody := rr.Body.String()
 	assert.Contains(t, responseBody, `"success":true`)
@@ -90,7 +90,7 @@ func TestClientHandler_ListClients_MethodNotAllowed(t *testing.T) {
 	// Assert
 	assert.Equal(t, http.StatusMethodNotAllowed, rr.Code)
 	assert.Equal(t, "application/json", rr.Header().Get("Content-Type"))
-	
+
 	// Check error response
 	responseBody := rr.Body.String()
 	assert.Contains(t, responseBody, `"success":false`)
@@ -125,18 +125,18 @@ func loadHandlerTestFixtures(t *testing.T) []ClientFixture {
 	// Get current file directory
 	_, currentFile, _, ok := runtime.Caller(0)
 	assert.True(t, ok, "Failed to get current file path")
-	
+
 	// Build path to fixture data
 	testDataPath := filepath.Join(filepath.Dir(currentFile), "..", "..", "testdata", "client", "client_fixtures.json")
-	
+
 	// Read fixture data file
 	data, err := os.ReadFile(testDataPath)
 	assert.NoError(t, err, "Failed to read fixture data file")
-	
+
 	// Parse JSON
 	var fixtures []ClientFixture
 	err = json.Unmarshal(data, &fixtures)
 	assert.NoError(t, err, "Failed to parse fixture data JSON")
-	
+
 	return fixtures
 }

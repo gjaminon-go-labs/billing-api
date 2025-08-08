@@ -3,7 +3,7 @@ package valueobject
 import (
 	"encoding/json"
 	"strings"
-	
+
 	"github.com/gjaminon-go-labs/billing-api/internal/domain/errors"
 )
 
@@ -16,29 +16,29 @@ type Phone struct {
 func NewPhone(phone string) (Phone, error) {
 	// Normalize the phone number
 	normalized := strings.TrimSpace(phone)
-	
+
 	// Empty phone is allowed (optional field)
 	if normalized == "" {
 		return Phone{value: ""}, nil
 	}
-	
+
 	// Remove common formatting characters for validation
 	cleanPhone := strings.ReplaceAll(normalized, " ", "")
 	cleanPhone = strings.ReplaceAll(cleanPhone, "-", "")
 	cleanPhone = strings.ReplaceAll(cleanPhone, "(", "")
 	cleanPhone = strings.ReplaceAll(cleanPhone, ")", "")
 	cleanPhone = strings.ReplaceAll(cleanPhone, ".", "")
-	
+
 	// Length check
 	if len(cleanPhone) < 7 || len(cleanPhone) > 15 {
 		return Phone{}, errors.NewValidationError("phone", phone, errors.ValidationLength, "phone number must be 7-15 digits")
 	}
-	
+
 	// Check if starts with valid digit (not 0 for international)
 	if strings.HasPrefix(cleanPhone, "0") && strings.HasPrefix(cleanPhone, "+") {
 		return Phone{}, errors.NewValidationError("phone", phone, errors.ValidationFormat, "international phone cannot start with 0")
 	}
-	
+
 	return Phone{value: normalized}, nil
 }
 
@@ -89,11 +89,11 @@ func (p *Phone) UnmarshalJSON(data []byte) error {
 	var temp struct {
 		Value string `json:"value"`
 	}
-	
+
 	if err := json.Unmarshal(data, &temp); err != nil {
 		return err
 	}
-	
+
 	p.value = temp.Value
 	return nil
 }

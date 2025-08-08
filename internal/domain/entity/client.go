@@ -5,10 +5,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-playground/validator/v10"
-	"github.com/google/uuid"
 	"github.com/gjaminon-go-labs/billing-api/internal/domain/errors"
 	"github.com/gjaminon-go-labs/billing-api/internal/domain/valueobject"
+	"github.com/go-playground/validator/v10"
+	"github.com/google/uuid"
 )
 
 // Client represents a billing client aggregate root
@@ -29,16 +29,16 @@ func NewClient(name, email, phone, address string) (*Client, error) {
 	if err != nil {
 		return nil, err // ValidationError already properly structured
 	}
-	
+
 	phoneVO, err := valueobject.NewPhone(phone)
 	if err != nil {
 		return nil, err // ValidationError already properly structured
 	}
-	
+
 	// Normalize primitive fields (validation handled by struct tags)
 	normalizedName := strings.TrimSpace(name)
 	normalizedAddress := strings.TrimSpace(address)
-	
+
 	// Create client instance
 	client := &Client{
 		id:        uuid.New().String(),
@@ -49,7 +49,7 @@ func NewClient(name, email, phone, address string) (*Client, error) {
 		createdAt: time.Now().UTC(),
 		updatedAt: time.Now().UTC(),
 	}
-	
+
 	// Validate the complete client using hybrid approach
 	if err := client.Validate(); err != nil {
 		return nil, err
@@ -65,7 +65,7 @@ func (c *Client) Validate() error {
 	if err := validator.New().Struct(c); err != nil {
 		return c.convertValidatorErrors(err)
 	}
-	
+
 	// 3. Run any additional custom business validation
 	return c.validateBusinessRules()
 }
@@ -73,13 +73,13 @@ func (c *Client) Validate() error {
 // convertValidatorErrors converts validator library errors to structured ValidationErrors
 func (c *Client) convertValidatorErrors(err error) error {
 	validationErrors := errors.NewValidationErrors()
-	
+
 	if validatorErrs, ok := err.(validator.ValidationErrors); ok {
 		for _, fieldErr := range validatorErrs {
 			field := strings.ToLower(fieldErr.Field())
 			var code errors.ErrorCode
 			var message string
-			
+
 			switch fieldErr.Tag() {
 			case "required":
 				code = errors.ValidationRequired
@@ -94,15 +94,15 @@ func (c *Client) convertValidatorErrors(err error) error {
 				code = errors.ValidationFormat
 				message = field + " validation failed"
 			}
-			
+
 			validationErrors.Add(field, fieldErr.Value(), code, message)
 		}
 	}
-	
+
 	if validationErrors.HasErrors() {
 		return validationErrors
 	}
-	
+
 	return err // Return original error if we couldn't convert it
 }
 
@@ -113,7 +113,7 @@ func (c *Client) validateBusinessRules() error {
 	// - Complex cross-field validation
 	// - Context-specific rules
 	// - Domain-specific constraints
-	
+
 	return nil
 }
 
@@ -124,12 +124,12 @@ func NewClientWithID(id, name, email, phone, address string, createdAt, updatedA
 	if err != nil {
 		return nil, err // ValidationError already properly structured
 	}
-	
+
 	phoneVO, err := valueobject.NewPhone(phone)
 	if err != nil {
 		return nil, err // ValidationError already properly structured
 	}
-	
+
 	// Create client instance
 	client := &Client{
 		id:        id,
@@ -140,16 +140,14 @@ func NewClientWithID(id, name, email, phone, address string, createdAt, updatedA
 		createdAt: createdAt,
 		updatedAt: updatedAt,
 	}
-	
+
 	// Validate the complete client using hybrid approach
 	if err := client.Validate(); err != nil {
 		return nil, err
 	}
-	
+
 	return client, nil
 }
-
-
 
 // UpdateDetails updates client details with validation
 func (c *Client) UpdateDetails(name, phone, address string) error {
@@ -158,13 +156,13 @@ func (c *Client) UpdateDetails(name, phone, address string) error {
 	if err != nil {
 		return err // ValidationError already properly structured
 	}
-	
+
 	// Update fields (normalization + validation via struct tags)
 	c.name = strings.TrimSpace(name)
 	c.phone = phoneVO
 	c.address = strings.TrimSpace(address)
 	c.updatedAt = time.Now().UTC()
-	
+
 	// Validate the updated client using hybrid approach
 	return c.Validate()
 }
@@ -176,10 +174,10 @@ func (c *Client) UpdateEmail(email string) error {
 	if err != nil {
 		return err // ValidationError already properly structured
 	}
-	
+
 	c.email = emailVO
 	c.updatedAt = time.Now().UTC()
-	
+
 	return nil
 }
 
@@ -255,7 +253,7 @@ func (c *Client) MarshalJSON() ([]byte, error) {
 		CreatedAt: c.createdAt,
 		UpdatedAt: c.updatedAt,
 	}
-	
+
 	return json.Marshal(jsonClient)
 }
 
@@ -271,11 +269,11 @@ func (c *Client) UnmarshalJSON(data []byte) error {
 		CreatedAt time.Time         `json:"createdAt"`
 		UpdatedAt time.Time         `json:"updatedAt"`
 	}
-	
+
 	if err := json.Unmarshal(data, &jsonClient); err != nil {
 		return err
 	}
-	
+
 	// Assign to private fields
 	c.id = jsonClient.ID
 	c.name = jsonClient.Name
@@ -284,6 +282,6 @@ func (c *Client) UnmarshalJSON(data []byte) error {
 	c.address = jsonClient.Address
 	c.createdAt = jsonClient.CreatedAt
 	c.updatedAt = jsonClient.UpdatedAt
-	
+
 	return nil
 }

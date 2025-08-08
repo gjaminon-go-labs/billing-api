@@ -28,11 +28,11 @@ func TestClientHandler_GetClient_Success(t *testing.T) {
 	// Load test scenarios
 	scenarios := loadGetClientScenarios(t)
 	validScenario := scenarios[0] // "Valid Get Client Scenario"
-	
+
 	// Setup integration test server
 	server := testhelpers.NewIntegrationTestServer(t)
 	defer server.Close()
-	
+
 	// Create a client first
 	now := time.Now().UTC()
 	client, err := entity.NewClientWithID(
@@ -45,26 +45,26 @@ func TestClientHandler_GetClient_Success(t *testing.T) {
 		now,
 	)
 	require.NoError(t, err)
-	
+
 	err = server.ClientRepository.Save(client)
 	require.NoError(t, err)
-	
+
 	// Test GET request
 	url := fmt.Sprintf("/api/v1/clients/%s", validScenario.Client.ID)
 	req := httptest.NewRequest(http.MethodGet, url, nil)
 	req.RemoteAddr = "192.0.2.1:1234"
-	
+
 	w := httptest.NewRecorder()
 	server.HTTPHandler.ServeHTTP(w, req)
-	
+
 	// Assertions - this should FAIL until implemented
 	assert.Equal(t, http.StatusOK, w.Code, "Should return 200 OK")
-	
+
 	var response dtos.SuccessResponse
 	err = json.Unmarshal(w.Body.Bytes(), &response)
 	assert.NoError(t, err, "Response should be valid JSON")
 	assert.True(t, response.Success, "Response should indicate success")
-	
+
 	// Verify client data in response
 	clientData, ok := response.Data.(map[string]interface{})
 	assert.True(t, ok, "Response data should be client object")
@@ -82,22 +82,22 @@ func TestClientHandler_GetClient_NotFound(t *testing.T) {
 	// Load test scenarios
 	scenarios := loadGetClientScenarios(t)
 	nonExistentID := scenarios[3].NonExistentIDs[0] // First non-existent ID
-	
+
 	// Setup integration test server
 	server := testhelpers.NewIntegrationTestServer(t)
 	defer server.Close()
-	
+
 	// Test GET request with non-existent ID
 	url := fmt.Sprintf("/api/v1/clients/%s", nonExistentID)
 	req := httptest.NewRequest(http.MethodGet, url, nil)
 	req.RemoteAddr = "192.0.2.1:1234"
-	
+
 	w := httptest.NewRecorder()
 	server.HTTPHandler.ServeHTTP(w, req)
-	
+
 	// Assertions - this should FAIL until implemented
 	assert.Equal(t, http.StatusNotFound, w.Code, "Should return 404 Not Found")
-	
+
 	var response dtos.ErrorResponse
 	err := json.Unmarshal(w.Body.Bytes(), &response)
 	assert.NoError(t, err, "Response should be valid JSON")
@@ -114,24 +114,24 @@ func TestClientHandler_GetClient_InvalidUUID(t *testing.T) {
 	// Load test scenarios
 	scenarios := loadGetClientScenarios(t)
 	invalidIDs := scenarios[2].InvalidIDs // Invalid UUID scenarios
-	
+
 	// Setup integration test server
 	server := testhelpers.NewIntegrationTestServer(t)
 	defer server.Close()
-	
+
 	for _, invalidID := range invalidIDs {
 		t.Run("InvalidID_"+invalidID, func(t *testing.T) {
 			// Test GET request with invalid ID
 			url := fmt.Sprintf("/api/v1/clients/%s", invalidID)
 			req := httptest.NewRequest(http.MethodGet, url, nil)
 			req.RemoteAddr = "192.0.2.1:1234"
-			
+
 			w := httptest.NewRecorder()
 			server.HTTPHandler.ServeHTTP(w, req)
-			
+
 			// Assertions - this should FAIL until implemented
 			assert.Equal(t, http.StatusBadRequest, w.Code, "Should return 400 Bad Request for invalid ID: %s", invalidID)
-			
+
 			var response dtos.ErrorResponse
 			err := json.Unmarshal(w.Body.Bytes(), &response)
 			assert.NoError(t, err, "Response should be valid JSON")
@@ -146,28 +146,28 @@ func loadGetClientScenarios(t *testing.T) []GetClientScenario {
 	// Get current file directory
 	_, currentFile, _, ok := runtime.Caller(0)
 	require.True(t, ok, "Failed to get current file path")
-	
+
 	// Build path to testdata
 	testDataPath := filepath.Join(filepath.Dir(currentFile), "..", "..", "testdata", "client", "get_client_scenarios.json")
-	
+
 	// Read and parse JSON
 	data, err := os.ReadFile(testDataPath)
 	require.NoError(t, err, "Failed to read get client scenarios file")
-	
+
 	var scenarios []GetClientScenario
 	err = json.Unmarshal(data, &scenarios)
 	require.NoError(t, err, "Failed to parse get client scenarios JSON")
-	
+
 	return scenarios
 }
 
 // GetClientScenario represents test data for get client operations
 type GetClientScenario struct {
-	Name           string            `json:"name"`
-	Description    string            `json:"description"`
-	Client         ClientTestData    `json:"client"`
-	InvalidIDs     []string          `json:"invalid_ids"`
-	NonExistentIDs []string          `json:"non_existent_ids"`
+	Name           string         `json:"name"`
+	Description    string         `json:"description"`
+	Client         ClientTestData `json:"client"`
+	InvalidIDs     []string       `json:"invalid_ids"`
+	NonExistentIDs []string       `json:"non_existent_ids"`
 }
 
 // ClientTestData represents a client in test data

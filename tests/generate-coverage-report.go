@@ -14,14 +14,14 @@ import (
 
 // BusinessTest represents a single integration test with business context
 type BusinessTest struct {
-	Title            string
-	Description      string
-	UserStory        string
-	BusinessValue    string
-	ScenariosTestedHtml   template.HTML
-	TestFunction     string
-	FilePath         string
-	Category         string
+	Title               string
+	Description         string
+	UserStory           string
+	BusinessValue       string
+	ScenariosTestedHtml template.HTML
+	TestFunction        string
+	FilePath            string
+	Category            string
 }
 
 // BusinessCategory groups related business tests
@@ -34,12 +34,12 @@ type BusinessCategory struct {
 
 // ReportData contains all data for the business report
 type ReportData struct {
-	GeneratedAt      string
-	TotalTests       int
-	TotalCategories  int
-	OverallCoverage  int
-	Categories       []BusinessCategory
-	Summary          ReportSummary
+	GeneratedAt     string
+	TotalTests      int
+	TotalCategories int
+	OverallCoverage int
+	Categories      []BusinessCategory
+	Summary         ReportSummary
 }
 
 // ReportSummary provides executive summary data
@@ -53,24 +53,24 @@ type ReportSummary struct {
 
 func main() {
 	fmt.Println("🔍 Generating Integration Test Coverage Report for Business Stakeholders...")
-	
+
 	// Find all integration test files
 	testFiles, err := findIntegrationTestFiles()
 	if err != nil {
 		fmt.Printf("❌ Error finding test files: %v\n", err)
 		os.Exit(1)
 	}
-	
+
 	// Parse business descriptions from test files
 	tests, err := parseBusinessDescriptions(testFiles)
 	if err != nil {
 		fmt.Printf("❌ Error parsing business descriptions: %v\n", err)
 		os.Exit(1)
 	}
-	
+
 	// Categorize tests
 	categories := categorizeTests(tests)
-	
+
 	// Generate report data
 	reportData := ReportData{
 		GeneratedAt:     time.Now().Format("January 2, 2006 at 3:04 PM"),
@@ -80,49 +80,49 @@ func main() {
 		Categories:      categories,
 		Summary:         generateSummary(categories),
 	}
-	
+
 	// Generate HTML report
 	err = generateHTMLReport(reportData)
 	if err != nil {
 		fmt.Printf("❌ Error generating HTML report: %v\n", err)
 		os.Exit(1)
 	}
-	
+
 	// Generate Markdown summary
 	err = generateMarkdownSummary(reportData)
 	if err != nil {
 		fmt.Printf("❌ Error generating Markdown summary: %v\n", err)
 		os.Exit(1)
 	}
-	
+
 	fmt.Printf("✅ Integration Test Coverage Report generated successfully!\n")
 	fmt.Printf("📊 Report: tests/reports/integration-coverage-report.html\n")
 	fmt.Printf("📋 Summary: tests/reports/integration-coverage-summary.md\n")
-	fmt.Printf("📈 Coverage: %d%% (%d tests across %d business categories)\n", 
+	fmt.Printf("📈 Coverage: %d%% (%d tests across %d business categories)\n",
 		reportData.OverallCoverage, reportData.TotalTests, reportData.TotalCategories)
 }
 
 func findIntegrationTestFiles() ([]string, error) {
 	var testFiles []string
-	
+
 	err := filepath.Walk("integration", func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
-		
+
 		if strings.HasSuffix(path, "_test.go") {
 			testFiles = append(testFiles, path)
 		}
-		
+
 		return nil
 	})
-	
+
 	return testFiles, err
 }
 
 func parseBusinessDescriptions(testFiles []string) ([]BusinessTest, error) {
 	var tests []BusinessTest
-	
+
 	// Regex patterns for business description comments
 	titleRegex := regexp.MustCompile(`// BUSINESS_TITLE:\s*(.+)`)
 	descRegex := regexp.MustCompile(`// BUSINESS_DESCRIPTION:\s*(.+)`)
@@ -130,21 +130,21 @@ func parseBusinessDescriptions(testFiles []string) ([]BusinessTest, error) {
 	valueRegex := regexp.MustCompile(`// BUSINESS_VALUE:\s*(.+)`)
 	scenariosRegex := regexp.MustCompile(`// SCENARIOS_TESTED:\s*(.+)`)
 	funcRegex := regexp.MustCompile(`func (Test\w+)\(`)
-	
+
 	for _, filePath := range testFiles {
 		file, err := os.Open(filePath)
 		if err != nil {
 			return nil, fmt.Errorf("error opening file %s: %v", filePath, err)
 		}
 		defer file.Close()
-		
+
 		scanner := bufio.NewScanner(file)
 		var currentTest BusinessTest
 		var foundBusinessTitle bool
-		
+
 		for scanner.Scan() {
 			line := scanner.Text()
-			
+
 			// Check for business title (start of new test)
 			if match := titleRegex.FindStringSubmatch(line); match != nil {
 				// Save previous test if complete
@@ -153,7 +153,7 @@ func parseBusinessDescriptions(testFiles []string) ([]BusinessTest, error) {
 					currentTest.Category = determineCategory(currentTest.Title, filePath)
 					tests = append(tests, currentTest)
 				}
-				
+
 				// Start new test
 				currentTest = BusinessTest{Title: strings.TrimSpace(match[1])}
 				foundBusinessTitle = true
@@ -176,7 +176,7 @@ func parseBusinessDescriptions(testFiles []string) ([]BusinessTest, error) {
 					currentTest.ScenariosTestedHtml = template.HTML(strings.Join(htmlScenarios, "<br>"))
 				} else if match := funcRegex.FindStringSubmatch(line); match != nil {
 					currentTest.TestFunction = match[1]
-					
+
 					// Save completed test
 					if currentTest.Title != "" {
 						currentTest.FilePath = filePath
@@ -187,7 +187,7 @@ func parseBusinessDescriptions(testFiles []string) ([]BusinessTest, error) {
 				}
 			}
 		}
-		
+
 		// Save last test if complete
 		if foundBusinessTitle && currentTest.TestFunction != "" {
 			currentTest.FilePath = filePath
@@ -195,14 +195,14 @@ func parseBusinessDescriptions(testFiles []string) ([]BusinessTest, error) {
 			tests = append(tests, currentTest)
 		}
 	}
-	
+
 	return tests, nil
 }
 
 func determineCategory(title, filePath string) string {
 	title = strings.ToLower(title)
 	filePath = strings.ToLower(filePath)
-	
+
 	if strings.Contains(title, "client") || strings.Contains(filePath, "client") {
 		return "Client Management"
 	} else if strings.Contains(title, "api") || strings.Contains(title, "security") || strings.Contains(title, "method") {
@@ -214,18 +214,18 @@ func determineCategory(title, filePath string) string {
 	} else if strings.Contains(title, "empty") || strings.Contains(title, "validation") {
 		return "Edge Case Handling"
 	}
-	
+
 	return "Business Logic"
 }
 
 func categorizeTests(tests []BusinessTest) []BusinessCategory {
 	categoryMap := make(map[string][]BusinessTest)
-	
+
 	// Group tests by category
 	for _, test := range tests {
 		categoryMap[test.Category] = append(categoryMap[test.Category], test)
 	}
-	
+
 	// Convert to slice and calculate coverage
 	var categories []BusinessCategory
 	for name, categoryTests := range categoryMap {
@@ -237,25 +237,25 @@ func categorizeTests(tests []BusinessTest) []BusinessCategory {
 		}
 		categories = append(categories, category)
 	}
-	
+
 	// Sort categories by name
 	sort.Slice(categories, func(i, j int) bool {
 		return categories[i].Name < categories[j].Name
 	})
-	
+
 	return categories
 }
 
 func getCategoryDescription(categoryName string) string {
 	descriptions := map[string]string{
-		"Client Management":        "Core business functionality for managing customer information and relationships",
+		"Client Management":         "Core business functionality for managing customer information and relationships",
 		"API Security & Validation": "Security controls and data validation ensuring system integrity and protection",
-		"Data Persistence":         "Database operations ensuring reliable data storage and retrieval",
-		"System Infrastructure":    "Core system services supporting overall application reliability and monitoring",
-		"Edge Case Handling":       "Robust handling of unusual scenarios and error conditions",
-		"Business Logic":           "Core business rules and process orchestration",
+		"Data Persistence":          "Database operations ensuring reliable data storage and retrieval",
+		"System Infrastructure":     "Core system services supporting overall application reliability and monitoring",
+		"Edge Case Handling":        "Robust handling of unusual scenarios and error conditions",
+		"Business Logic":            "Core business rules and process orchestration",
 	}
-	
+
 	if desc, exists := descriptions[categoryName]; exists {
 		return desc
 	}
@@ -266,18 +266,18 @@ func calculateOverallCoverage(categories []BusinessCategory) int {
 	if len(categories) == 0 {
 		return 0
 	}
-	
+
 	totalCoverage := 0
 	for _, category := range categories {
 		totalCoverage += category.Coverage
 	}
-	
+
 	return totalCoverage / len(categories)
 }
 
 func generateSummary(categories []BusinessCategory) ReportSummary {
 	summary := ReportSummary{}
-	
+
 	for _, category := range categories {
 		switch category.Name {
 		case "Client Management":
@@ -292,7 +292,7 @@ func generateSummary(categories []BusinessCategory) ReportSummary {
 			summary.APIFunctionality = category.Coverage
 		}
 	}
-	
+
 	return summary
 }
 
@@ -302,7 +302,7 @@ func generateHTMLReport(data ReportData) error {
 	if err != nil {
 		return err
 	}
-	
+
 	// HTML template
 	htmlTemplate := `<!DOCTYPE html>
 <html lang="en">
@@ -414,13 +414,13 @@ func generateHTMLReport(data ReportData) error {
 	if err != nil {
 		return err
 	}
-	
+
 	file, err := os.Create("reports/integration-coverage-report.html")
 	if err != nil {
 		return err
 	}
 	defer file.Close()
-	
+
 	return tmpl.Execute(file, data)
 }
 
@@ -430,13 +430,13 @@ func generateMarkdownSummary(data ReportData) error {
 	if err != nil {
 		return err
 	}
-	
+
 	file, err := os.Create("reports/integration-coverage-summary.md")
 	if err != nil {
 		return err
 	}
 	defer file.Close()
-	
+
 	// Write markdown summary
 	fmt.Fprintf(file, "# Integration Test Coverage Summary\n\n")
 	fmt.Fprintf(file, "**Generated:** %s\n\n", data.GeneratedAt)
@@ -444,12 +444,12 @@ func generateMarkdownSummary(data ReportData) error {
 	fmt.Fprintf(file, "- **Overall Coverage:** %d%%\n", data.OverallCoverage)
 	fmt.Fprintf(file, "- **Business Scenarios Tested:** %d\n", data.TotalTests)
 	fmt.Fprintf(file, "- **Feature Categories:** %d\n\n", data.TotalCategories)
-	
+
 	fmt.Fprintf(file, "## Business Feature Coverage\n\n")
 	for _, category := range data.Categories {
 		fmt.Fprintf(file, "### %s (%d%% Covered)\n", category.Name, category.Coverage)
 		fmt.Fprintf(file, "%s\n\n", category.Description)
-		
+
 		for _, test := range category.Tests {
 			fmt.Fprintf(file, "**%s**\n", test.Title)
 			fmt.Fprintf(file, "- What it validates: %s\n", test.Description)
@@ -459,9 +459,9 @@ func generateMarkdownSummary(data ReportData) error {
 			fmt.Fprintf(file, "\n")
 		}
 	}
-	
+
 	fmt.Fprintf(file, "---\n")
 	fmt.Fprintf(file, "*This report is automatically generated from integration test business descriptions.*\n")
-	
+
 	return nil
 }

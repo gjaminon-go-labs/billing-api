@@ -24,11 +24,11 @@ func TestClientRepository_GetByID_Success(t *testing.T) {
 	// Setup integration test stack
 	stack := testhelpers.NewCleanIntegrationTestStack()
 	repo := stack.ClientRepo
-	
+
 	// Load test scenarios
 	scenarios := loadRepositoryTestScenarios(t)
 	testClient := scenarios[0] // First client scenario
-	
+
 	// Create and save a client
 	now := time.Now().UTC()
 	client, err := entity.NewClientWithID(
@@ -41,13 +41,13 @@ func TestClientRepository_GetByID_Success(t *testing.T) {
 		now,
 	)
 	require.NoError(t, err)
-	
+
 	err = repo.Save(client)
 	require.NoError(t, err)
-	
+
 	// Test GetByID
 	retrievedClient, err := repo.GetByID(testClient.ID)
-	
+
 	// Assertions - this should FAIL until implemented
 	assert.NoError(t, err, "GetByID should succeed for existing client")
 	assert.NotNil(t, retrievedClient, "Retrieved client should not be nil")
@@ -65,12 +65,12 @@ func TestClientRepository_GetByID_NotFound(t *testing.T) {
 	// Setup integration test stack
 	stack := testhelpers.NewCleanIntegrationTestStack()
 	repo := stack.ClientRepo
-	
+
 	nonExistentID := "999e4567-e89b-12d3-a456-426614174999"
-	
+
 	// Test GetByID with non-existent ID
 	retrievedClient, err := repo.GetByID(nonExistentID)
-	
+
 	// Assertions - this should FAIL until implemented
 	assert.Error(t, err, "GetByID should fail for non-existent client")
 	assert.Nil(t, retrievedClient, "Retrieved client should be nil for non-existent client")
@@ -85,11 +85,11 @@ func TestClientRepository_Delete_Success(t *testing.T) {
 	// Setup integration test stack
 	stack := testhelpers.NewCleanIntegrationTestStack()
 	repo := stack.ClientRepo
-	
+
 	// Load test scenarios
 	scenarios := loadRepositoryTestScenarios(t)
 	testClient := scenarios[0] // First client scenario
-	
+
 	// Create and save a client
 	now := time.Now().UTC()
 	client, err := entity.NewClientWithID(
@@ -102,21 +102,21 @@ func TestClientRepository_Delete_Success(t *testing.T) {
 		now,
 	)
 	require.NoError(t, err)
-	
+
 	err = repo.Save(client)
 	require.NoError(t, err)
-	
+
 	// Verify client exists before deletion
 	existingClient, err := repo.GetByID(testClient.ID)
 	require.NoError(t, err, "Client should exist before deletion")
 	require.NotNil(t, existingClient, "Client should exist before deletion")
-	
+
 	// Test Delete
 	err = repo.Delete(testClient.ID)
-	
+
 	// Assertions - this should FAIL until implemented
 	assert.NoError(t, err, "Delete should succeed for existing client")
-	
+
 	// Verify client no longer exists
 	deletedClient, err := repo.GetByID(testClient.ID)
 	assert.Error(t, err, "GetByID should fail after deletion")
@@ -132,12 +132,12 @@ func TestClientRepository_Delete_NotFound(t *testing.T) {
 	// Setup integration test stack
 	stack := testhelpers.NewCleanIntegrationTestStack()
 	repo := stack.ClientRepo
-	
+
 	nonExistentID := "999e4567-e89b-12d3-a456-426614174999"
-	
+
 	// Test Delete with non-existent ID
 	err := repo.Delete(nonExistentID)
-	
+
 	// Assertions - this should FAIL until implemented
 	assert.Error(t, err, "Delete should fail for non-existent client")
 }
@@ -147,18 +147,18 @@ func loadRepositoryTestScenarios(t *testing.T) []RepositoryTestClient {
 	// Get current file directory
 	_, currentFile, _, ok := runtime.Caller(0)
 	require.True(t, ok, "Failed to get current file path")
-	
+
 	// Build path to testdata
 	testDataPath := filepath.Join(filepath.Dir(currentFile), "..", "..", "testdata", "client", "repository_test_fixtures.json")
-	
+
 	// Read and parse JSON
 	data, err := os.ReadFile(testDataPath)
 	require.NoError(t, err, "Failed to read repository test fixtures file")
-	
+
 	var scenarios []RepositoryTestClient
 	err = json.Unmarshal(data, &scenarios)
 	require.NoError(t, err, "Failed to parse repository test fixtures JSON")
-	
+
 	return scenarios
 }
 

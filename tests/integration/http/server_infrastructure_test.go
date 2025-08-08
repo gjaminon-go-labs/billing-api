@@ -26,8 +26,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/gjaminon-go-labs/billing-api/tests/testhelpers"
+	"github.com/stretchr/testify/assert"
 )
 
 // BUSINESS_TITLE: System Health Monitoring
@@ -38,7 +38,7 @@ import (
 func TestHTTPServer_Integration_HealthCheck(t *testing.T) {
 	// Set up complete HTTP server using InMemory test helpers
 	server := testhelpers.NewInMemoryTestServer()
-	
+
 	// Create test server
 	testServer := httptest.NewServer(server.Handler())
 	defer testServer.Close()
@@ -73,7 +73,7 @@ func TestHTTPServer_Integration_HealthCheck(t *testing.T) {
 func TestHTTPServer_Integration_CORS(t *testing.T) {
 	// Set up complete HTTP server using InMemory test helpers
 	server := testhelpers.NewInMemoryTestServer()
-	
+
 	// Create test server
 	testServer := httptest.NewServer(server.Handler())
 	defer testServer.Close()
@@ -81,7 +81,7 @@ func TestHTTPServer_Integration_CORS(t *testing.T) {
 	// Make OPTIONS request (preflight)
 	req, err := http.NewRequest(http.MethodOptions, testServer.URL+"/api/v1/clients", nil)
 	assert.NoError(t, err)
-	
+
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	assert.NoError(t, err)
