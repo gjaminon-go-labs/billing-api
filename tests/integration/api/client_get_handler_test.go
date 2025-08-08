@@ -31,7 +31,6 @@ func TestClientHandler_GetClient_Success(t *testing.T) {
 
 	// Setup integration test server
 	server := testhelpers.NewIntegrationTestServer(t)
-	defer server.Close()
 
 	// Create a client first
 	now := time.Now().UTC()
@@ -85,7 +84,6 @@ func TestClientHandler_GetClient_NotFound(t *testing.T) {
 
 	// Setup integration test server
 	server := testhelpers.NewIntegrationTestServer(t)
-	defer server.Close()
 
 	// Test GET request with non-existent ID
 	url := fmt.Sprintf("/api/v1/clients/%s", nonExistentID)
@@ -117,7 +115,6 @@ func TestClientHandler_GetClient_InvalidUUID(t *testing.T) {
 
 	// Setup integration test server
 	server := testhelpers.NewIntegrationTestServer(t)
-	defer server.Close()
 
 	for _, invalidID := range invalidIDs {
 		t.Run("InvalidID_"+invalidID, func(t *testing.T) {

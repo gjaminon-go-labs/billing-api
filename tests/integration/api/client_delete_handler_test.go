@@ -27,7 +27,6 @@ func TestClientHandler_DeleteClient_Success(t *testing.T) {
 
 	// Setup integration test server
 	server := testhelpers.NewIntegrationTestServer()
-	defer server.Close()
 
 	// Create a client first
 	client, err := entity.NewClientWithID(
@@ -77,7 +76,6 @@ func TestClientHandler_DeleteClient_NotFound(t *testing.T) {
 
 	// Setup integration test server
 	server := testhelpers.NewIntegrationTestServer()
-	defer server.Close()
 
 	// Test DELETE request with non-existent ID
 	url := fmt.Sprintf("/api/v1/clients/%s", nonExistentID)
@@ -109,7 +107,6 @@ func TestClientHandler_DeleteClient_InvalidUUID(t *testing.T) {
 
 	// Setup integration test server
 	server := testhelpers.NewIntegrationTestServer()
-	defer server.Close()
 
 	for _, invalidID := range invalidIDs {
 		t.Run("InvalidID_"+invalidID, func(t *testing.T) {

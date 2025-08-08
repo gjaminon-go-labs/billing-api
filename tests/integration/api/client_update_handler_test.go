@@ -31,7 +31,6 @@ func TestClientHandler_UpdateClient_Success(t *testing.T) {
 
 	// Setup integration test server
 	server := testhelpers.NewIntegrationTestServer(t)
-	defer server.Close()
 
 	// Create the original client
 	originalClient, err := entity.NewClientWithID(
@@ -89,7 +88,6 @@ func TestClientHandler_UpdateClient_PartialUpdate(t *testing.T) {
 
 	// Setup integration test server
 	server := testhelpers.NewIntegrationTestServer(t)
-	defer server.Close()
 
 	// Create the original client
 	originalClient, err := entity.NewClientWithID(
@@ -148,7 +146,6 @@ func TestClientHandler_UpdateClient_NotFound(t *testing.T) {
 
 	// Setup integration test server
 	server := testhelpers.NewIntegrationTestServer(t)
-	defer server.Close()
 
 	// Prepare update request
 	requestBody, err := json.Marshal(updateRequest)
@@ -185,7 +182,6 @@ func TestClientHandler_UpdateClient_ValidationError(t *testing.T) {
 
 	// Setup integration test server
 	server := testhelpers.NewIntegrationTestServer(t)
-	defer server.Close()
 
 	// Create a test client
 	validClient, err := entity.NewClientWithID(
@@ -235,7 +231,6 @@ func TestClientHandler_UpdateClient_ValidationError(t *testing.T) {
 func TestClientHandler_UpdateClient_InvalidJSON(t *testing.T) {
 	// Setup integration test server
 	server := testhelpers.NewIntegrationTestServer(t)
-	defer server.Close()
 
 	// Create a test client
 	validClient, err := entity.NewClientWithID(
