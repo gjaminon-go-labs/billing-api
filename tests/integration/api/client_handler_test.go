@@ -19,7 +19,7 @@
 // - BillingService (application layer)
 // - ClientRepository (repository pattern)
 // - PostgreSQL Storage (test infrastructure)
-package http
+package api
 
 import (
 	"bytes"
