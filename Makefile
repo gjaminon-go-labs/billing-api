@@ -7,14 +7,25 @@ help:
 	@echo "  dev-setup        - Setup development environment (provision databases)"
 	@echo "  test-setup       - Setup test environment (provision test database)"
 	@echo "  restore          - Install/update package dependencies"
+	@echo ""
+	@echo "Quality Checks (run before pushing):"
+	@echo "  lint             - Run go vet and format check"
+	@echo "  fmt              - Auto-format code with gofmt"
+	@echo "  pre-push         - Run all checks before git push (lint + tests)"
+	@echo ""
+	@echo "Testing:"
 	@echo "  test-unit        - Run unit tests only (domain layer validation)"
 	@echo "  test-integration - Run integration tests only (requires local PostgreSQL)"
 	@echo "  test-integration-report - Run integration tests and generate business coverage report"
-	@echo "  test-all         - Run all tests (unit + integration)"
+	@echo "  test-all         - Run all tests with quality checks (lint + unit + integration)"
+	@echo ""
+	@echo "Database:"
 	@echo "  migrate-up       - Run all pending database migrations (dev environment)"
 	@echo "  migrate-down     - Roll back one database migration (dev environment)"
 	@echo "  migrate-status   - Show current migration status (dev environment)"
 	@echo "  migrate-reset    - Reset database migrations (development only)"
+	@echo ""
+	@echo "Development:"
 	@echo "  run-dev          - Run application in development mode"
 	@echo "  build            - Build application binaries"
 	@echo "  clean            - Clean build artifacts"
@@ -57,6 +68,33 @@ test-setup:
 
 restore:
 	go mod tidy
+
+# Quality check commands
+lint:
+	@echo "🔍 Running code quality checks..."
+	@echo "Checking go vet..."
+	@go vet ./...
+	@echo "✅ go vet passed"
+	@echo ""
+	@echo "Checking code formatting..."
+	@if [ -n "$$(gofmt -l .)" ]; then \
+		echo "❌ Code is not formatted. Files that need formatting:"; \
+		gofmt -l .; \
+		echo ""; \
+		echo "Run 'make fmt' to auto-format"; \
+		exit 1; \
+	fi
+	@echo "✅ Code formatting check passed"
+	@echo ""
+	@echo "✅ All quality checks passed!"
+
+fmt:
+	@echo "🎨 Auto-formatting code..."
+	@gofmt -w .
+	@echo "✅ Code formatted"
+
+pre-push: lint test-unit
+	@echo "✅ Pre-push checks complete! Safe to push."
 
 test-unit:
 	@echo "Running unit tests (domain layer validation)..."
@@ -105,9 +143,11 @@ test-integration-report:
 	@echo "   📄 Summary: tests/reports/integration-coverage-summary.md"
 
 test-all:
-	@echo "Running all tests (unit + integration)..."
+	@echo "Running all tests with quality checks..."
+	$(MAKE) lint
 	$(MAKE) test-unit
 	$(MAKE) test-integration
+	@echo "✅ All tests and quality checks passed!"
 
 # Migration commands (default to development environment)
 migrate-up:

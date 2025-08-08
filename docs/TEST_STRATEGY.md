@@ -21,6 +21,27 @@ This document outlines the simplified testing strategy for the billing-api servi
 - No smart detection or auto-provisioning logic
 - Predictable behavior across all environments
 
+## Code Quality Checks
+
+### Static Analysis (`go vet`)
+**Purpose**: Catch potential bugs and non-idiomatic code before runtime
+- **Command**: `make lint`
+- **Checks**: Suspicious constructs, incorrect function calls, unused code
+- **Speed**: Very fast (< 5 seconds)
+- **When to run**: BEFORE every push to avoid CI failures
+
+**Why this matters**: 
+- Similar to .NET Code Analysis (CA rules) or Roslyn Analyzers
+- Catches issues that work at runtime but violate Go best practices
+- Required by CI pipeline - failing locally saves time
+
+### Code Formatting (`gofmt`)
+**Purpose**: Ensure consistent code style across the project
+- **Check command**: `make lint` (includes format check)
+- **Fix command**: `make fmt` (auto-formats all files)
+- **Speed**: Instant
+- **When to run**: Before committing code
+
 ## Test Types
 
 ### Unit Tests (`tests/unit/`)
@@ -85,6 +106,60 @@ psql -h localhost -p 5432 -U postgres -c "\l" | grep billing_service
 make test-unit         # Should always work (no PostgreSQL needed)
 make test-integration  # Should work if PostgreSQL setup correct
 ```
+
+## Developer Workflow
+
+### Before Every Push (REQUIRED)
+To avoid CI failures, always run these checks locally:
+
+```bash
+# Option 1: Run pre-push command (recommended)
+make pre-push
+
+# Option 2: Run checks manually
+make lint          # Code quality (go vet + formatting)
+make test-unit     # Business logic tests
+make test-integration  # Database tests (if changes affect DB)
+
+# Option 3: Run everything
+make test-all      # Runs lint + all tests
+```
+
+### Common Workflows
+
+**Quick development cycle:**
+```bash
+# While coding
+make test-unit     # Fast feedback on business logic
+
+# Before committing
+make fmt           # Auto-format code
+make lint          # Check quality
+```
+
+**Before pushing to GitHub:**
+```bash
+make pre-push      # Runs all essential checks
+git push           # Now safe to push
+```
+
+**Full validation:**
+```bash
+make test-all      # Everything: lint + unit + integration
+```
+
+### If CI Fails
+If your CI pipeline fails on GitHub but tests pass locally:
+
+1. **Check go vet**: CI runs `go vet ./...` - run `make lint` locally
+2. **Check formatting**: CI checks `gofmt` - run `make fmt` to fix
+3. **Check Go version**: Ensure local Go version matches CI (1.22)
+
+### .NET Developer Comparison
+- `make lint` = Running Code Analysis + StyleCop in Visual Studio
+- `make fmt` = Format Document (Ctrl+K, Ctrl+D) in VS
+- `make test-unit` = Running unit tests in Test Explorer
+- `make pre-push` = Pre-commit validation in Azure DevOps
 
 ## Daily Development Workflow
 
