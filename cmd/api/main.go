@@ -32,7 +32,7 @@ func main() {
 	log.Printf("📦 Version: %s", Version)
 	log.Printf("📅 Build Date: %s", BuildDate)
 	log.Printf("🔖 Git Commit: %s", GitCommit)
-	
+
 	// Initialize application
 	if err := run(); err != nil {
 		log.Fatalf("Application failed to start: %v", err)
