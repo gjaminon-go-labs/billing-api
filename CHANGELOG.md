@@ -1,3 +1,10 @@
+## [1.1.1](https://github.com/gjaminon-go-labs/billing-api/compare/v1.1.0...v1.1.1) (2025-08-08)
+
+
+### Reverts
+
+* Revert "feat: improve container tagging strategy" ([60a4092](https://github.com/gjaminon-go-labs/billing-api/commit/60a40928029d82ddc71fae080ca3c85cb471e6b0))
+
 # [1.1.0](https://github.com/gjaminon-go-labs/billing-api/compare/v1.0.0...v1.1.0) (2025-08-08)
 
 
