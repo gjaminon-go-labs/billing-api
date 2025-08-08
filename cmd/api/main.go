@@ -19,7 +19,20 @@ import (
 	"github.com/gjaminon-go-labs/billing-api/internal/config"
 )
 
+// Build-time variables (set via -ldflags)
+var (
+	Version   = "dev"
+	BuildDate = "unknown"
+	GitCommit = "unknown"
+)
+
 func main() {
+	// Display version information
+	log.Printf("🚀 Starting Billing API")
+	log.Printf("📦 Version: %s", Version)
+	log.Printf("📅 Build Date: %s", BuildDate)
+	log.Printf("🔖 Git Commit: %s", GitCommit)
+	
 	// Initialize application
 	if err := run(); err != nil {
 		log.Fatalf("Application failed to start: %v", err)
@@ -28,7 +41,6 @@ func main() {
 
 // run contains the main application logic
 func run() error {
-	log.Println("🚀 Starting Billing Service...")
 
 	// 1. Load configuration
 	environment := config.GetEnvironment()
