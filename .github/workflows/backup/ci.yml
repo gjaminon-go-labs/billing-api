@@ -1,0 +1,70 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    name: Test and Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout Code
+      - uses: actions/checkout@v4
+
+      # 2. Setup Go
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      # 3. Restore Dependencies (with caching)
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Download dependencies
+        run: go mod download
+
+      # 4. Code Formatting Check
+      - name: Check formatting
+        run: |
+          if [ -n "$(gofmt -l .)" ]; then
+            echo "Go code is not formatted:"
+            gofmt -d .
+            exit 1
+          fi
+
+      # 5. Basic Linting
+      - name: Run go vet
+        run: go vet ./...
+
+      # 6. Build Verification
+      - name: Build
+        run: go build -v ./...
+
+      # 7. Unit Tests
+      - name: Run unit tests
+        run: go test -v -race -coverprofile=coverage.out ./tests/unit/...
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.out
+      
+      # 8. Upload to Codecov
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./coverage.out
+          flags: unittests
+          name: billing-api
+          fail_ci_if_error: false
+          verbose: true
