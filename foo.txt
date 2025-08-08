@@ -1,0 +1,5 @@
+This is a test file to verify GitHub Flow and container tagging.
+Created on 2025-08-08 to test:
+- Feature branch container tagging
+- Semantic versioning
+- Complete CI/CD pipeline
