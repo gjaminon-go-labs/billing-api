@@ -86,12 +86,12 @@ jobs:
       # 9. Run migrations for unit tests database
       - name: Run migrations for unit tests
         run: |
-          migrate -path migrations -database "postgresql://postgres:postgres@localhost:5432/billing_test?sslmode=disable" up
+          migrate -path database/migrations -database "postgresql://postgres:postgres@localhost:5432/billing_test?sslmode=disable" up
 
       # 10. Run migrations for integration tests database  
       - name: Run migrations for integration tests
         run: |
-          migrate -path migrations -database "postgresql://postgres:postgres@localhost:5432/billing_integration_test?sslmode=disable" up
+          migrate -path database/migrations -database "postgresql://postgres:postgres@localhost:5432/billing_integration_test?sslmode=disable" up
 
       # 11. Unit Tests
       - name: Run unit tests
