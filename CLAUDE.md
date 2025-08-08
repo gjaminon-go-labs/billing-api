@@ -3,22 +3,38 @@
 ## Service Overview
 This is the billing microservice for the go-labs platform. It handles client management, invoicing, and payment operations following Domain-Driven Design principles.
 
-⚠️ **IMPORTANT**: All development MUST follow the TDD workflow defined in `../CLAUDE.md`
+⚠️ **IMPORTANT**: All development MUST follow the TDD workflow defined in `../../CLAUDE.md`
 
 ## Current Implementation Status
 
 ### ✅ Completed Features
+
+#### Client CRUD Operations (All 4 Use Cases)
 - **UC-B-001**: Create Client - Full implementation with validation
   - Domain entity with email/phone value objects
   - Repository pattern with PostgreSQL storage
   - REST API endpoint: `POST /api/v1/clients`
   - Comprehensive test coverage
 
+- **UC-B-002**: Get Client by ID - Complete with UUID validation
+  - UUID validation using google/uuid library
+  - Proper not found error handling
+  - REST API endpoint: `GET /api/v1/clients/:id`
+  
+- **UC-B-003**: Update Client - Partial updates supported
+  - Field-level validation on updates
+  - Email uniqueness enforcement
+  - REST API endpoint: `PUT /api/v1/clients/:id`
+  
+- **UC-B-004**: Delete Client - Hard delete implementation
+  - No soft delete (by design)
+  - Cascading delete handling
+  - REST API endpoint: `DELETE /api/v1/clients/:id`
+
 ### 🎯 Next Implementation Priority
-1. **UC-B-002**: Get Client by ID
-2. **UC-B-003**: Update Client
-3. **UC-B-004**: Delete Client  
-4. **UC-B-005**: List Clients with pagination
+1. **UC-B-005**: List Clients with pagination
+2. **Invoice Domain**: Create, Get, Update, List invoices
+3. **Payment Processing**: Payment gateway integration
 
 ## Domain-Specific Rules
 
@@ -110,7 +126,8 @@ make run-dev
 1. This service uses schema-based isolation (`billing` schema)
 2. Two database users: migration user (DDL) and app user (DML)
 3. Test database has automatic cleanup between runs
-4. All new features MUST follow TDD workflow from `../CLAUDE.md`
+4. All new features MUST follow TDD workflow from `../../CLAUDE.md`
 
 ---
-*For TDD workflow and general project rules, see `../CLAUDE.md`*
+*For TDD workflow and general project rules, see `../../CLAUDE.md`*
+*For platform architecture and documentation, see `../../platform-docs/`*
