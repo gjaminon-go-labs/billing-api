@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/gjaminon-go-labs/billing-api/internal/api/http/dtos"
@@ -69,21 +70,78 @@ func (h *ClientHandler) ListClients(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Call application service
-	clients, err := h.billingService.ListClients()
-	if err != nil {
-		h.handleDomainError(w, err)
-		return
-	}
+	// Parse pagination parameters
+	pageStr := r.URL.Query().Get("page")
+	limitStr := r.URL.Query().Get("limit")
 
-	// Convert domain entities to response DTOs
-	response := make([]dtos.ClientResponse, len(clients))
-	for i, client := range clients {
-		response[i] = h.toClientResponse(client)
-	}
+	// Always use pagination (with defaults if not specified)
+	{
+		// Parse and validate pagination
+		paginationReq := dtos.PaginationRequest{}
 
-	// Write success response
-	h.writeSuccessResponse(w, http.StatusOK, response)
+		if pageStr != "" {
+			page := 0
+			_, err := fmt.Sscanf(pageStr, "%d", &page)
+			if err != nil {
+				h.writeErrorResponse(w, http.StatusBadRequest, "INVALID_PARAMETER", "invalid page parameter", "")
+				return
+			}
+			paginationReq.Page = page
+		}
+
+		if limitStr != "" {
+			limit := 0
+			_, err := fmt.Sscanf(limitStr, "%d", &limit)
+			if err != nil {
+				h.writeErrorResponse(w, http.StatusBadRequest, "INVALID_PARAMETER", "invalid limit parameter", "")
+				return
+			}
+			paginationReq.Limit = limit
+		}
+
+		// Validate before setting defaults (to catch invalid values like 0 or negative)
+		if pageStr != "" && paginationReq.Page <= 0 {
+			h.writeErrorResponse(w, http.StatusBadRequest, "VALIDATION_ERROR", "page must be greater than 0", "")
+			return
+		}
+		if limitStr != "" && (paginationReq.Limit <= 0 || paginationReq.Limit > dtos.MaxLimit) {
+			h.writeErrorResponse(w, http.StatusBadRequest, "VALIDATION_ERROR", "limit must be between 1 and 100", "")
+			return
+		}
+
+		// Set defaults
+		paginationReq.SetDefaults()
+
+		// Final validation
+		if err := paginationReq.Validate(); err != nil {
+			h.writeErrorResponse(w, http.StatusBadRequest, "VALIDATION_ERROR", err.Error(), "")
+			return
+		}
+
+		// Call paginated service method
+		result, err := h.billingService.ListClientsWithPagination(paginationReq.Page, paginationReq.Limit)
+		if err != nil {
+			h.handleDomainError(w, err)
+			return
+		}
+
+		// Convert domain entities to response DTOs
+		clientResponses := make([]dtos.ClientResponse, len(result.Clients))
+		for i, client := range result.Clients {
+			clientResponses[i] = h.toClientResponse(client)
+		}
+
+		// Create paginated response
+		paginationResponse := &dtos.PaginationResponse{
+			Page:       result.Pagination.Page,
+			Limit:      result.Pagination.Limit,
+			TotalCount: result.Pagination.TotalCount,
+			TotalPages: result.Pagination.TotalPages,
+		}
+
+		// Write paginated response
+		h.writePaginatedResponse(w, http.StatusOK, clientResponses, paginationResponse)
+	}
 }
 
 // handleDomainError converts domain errors to appropriate HTTP responses
@@ -228,4 +286,17 @@ func (h *ClientHandler) DeleteClient(w http.ResponseWriter, r *http.Request, cli
 
 	// Write success response with no content
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// writePaginatedResponse writes a paginated response with metadata
+func (h *ClientHandler) writePaginatedResponse(w http.ResponseWriter, statusCode int, data interface{}, pagination *dtos.PaginationResponse) {
+	response := dtos.PaginatedResponse{
+		Data:       data,
+		Pagination: pagination,
+		Success:    true,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
+	json.NewEncoder(w).Encode(response)
 }

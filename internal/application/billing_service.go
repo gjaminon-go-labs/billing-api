@@ -42,6 +42,54 @@ func (s *BillingService) ListClients() ([]*entity.Client, error) {
 	return s.clientRepo.GetAll()
 }
 
+// PaginatedClients represents paginated client results
+type PaginatedClients struct {
+	Clients    []*entity.Client
+	Pagination PaginationMeta
+}
+
+// PaginationMeta represents pagination metadata
+type PaginationMeta struct {
+	Page       int
+	Limit      int
+	TotalCount int
+	TotalPages int
+}
+
+// ListClientsWithPagination retrieves clients with pagination
+func (s *BillingService) ListClientsWithPagination(page, limit int) (*PaginatedClients, error) {
+	// Calculate offset
+	offset := (page - 1) * limit
+
+	// Get total count
+	totalCount, err := s.clientRepo.CountClients()
+	if err != nil {
+		return nil, err
+	}
+
+	// Get paginated clients
+	clients, err := s.clientRepo.ListClientsWithPagination(offset, limit)
+	if err != nil {
+		return nil, err
+	}
+
+	// Calculate total pages
+	totalPages := totalCount / limit
+	if totalCount%limit > 0 {
+		totalPages++
+	}
+
+	return &PaginatedClients{
+		Clients: clients,
+		Pagination: PaginationMeta{
+			Page:       page,
+			Limit:      limit,
+			TotalCount: totalCount,
+			TotalPages: totalPages,
+		},
+	}, nil
+}
+
 // GetClientByID retrieves a client by ID
 func (s *BillingService) GetClientByID(id string) (*entity.Client, error) {
 	// Basic UUID validation

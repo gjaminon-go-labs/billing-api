@@ -161,3 +161,73 @@ func (r *ClientRepositoryImpl) Delete(id string) error {
 
 	return nil
 }
+
+// CountClients returns the total number of clients
+func (r *ClientRepositoryImpl) CountClients() (int, error) {
+	// Get all values from storage
+	values, err := r.storage.ListAll()
+	if err != nil {
+		return 0, domainErrors.NewRepositoryError(
+			"count_clients",
+			domainErrors.RepositoryInternal,
+			"failed to count clients",
+			err,
+		)
+	}
+
+	return len(values), nil
+}
+
+// ListClientsWithPagination retrieves clients with pagination
+func (r *ClientRepositoryImpl) ListClientsWithPagination(offset, limit int) ([]*entity.Client, error) {
+	// Get all values from storage
+	values, err := r.storage.ListAll()
+	if err != nil {
+		return nil, domainErrors.NewRepositoryError(
+			"list_clients_paginated",
+			domainErrors.RepositoryInternal,
+			"failed to retrieve clients",
+			err,
+		)
+	}
+
+	// Apply pagination
+	start := offset
+	if start > len(values) {
+		// Return empty slice if offset is beyond data
+		return []*entity.Client{}, nil
+	}
+
+	end := start + limit
+	if end > len(values) {
+		end = len(values)
+	}
+
+	// Convert storage values to domain entities for the requested page
+	paginatedValues := values[start:end]
+	clients := make([]*entity.Client, 0, len(paginatedValues))
+
+	for _, value := range paginatedValues {
+		// Try direct type assertion first (for in-memory storage)
+		if client, ok := value.(*entity.Client); ok {
+			clients = append(clients, client)
+			continue
+		}
+
+		// Handle JSON deserialization (for PostgreSQL storage)
+		if clientMap, ok := value.(map[string]interface{}); ok {
+			client, err := r.deserializeClient(clientMap)
+			if err != nil {
+				return nil, domainErrors.NewRepositoryError(
+					"deserialize_client",
+					domainErrors.RepositoryInternal,
+					"failed to deserialize client",
+					err,
+				)
+			}
+			clients = append(clients, client)
+		}
+	}
+
+	return clients, nil
+}

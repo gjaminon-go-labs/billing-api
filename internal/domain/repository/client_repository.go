@@ -17,4 +17,10 @@ type ClientRepository interface {
 
 	// Delete removes a client entity by ID
 	Delete(id string) error
+
+	// CountClients returns the total number of clients
+	CountClients() (int, error)
+
+	// ListClientsWithPagination retrieves clients with pagination
+	ListClientsWithPagination(offset, limit int) ([]*entity.Client, error)
 }
