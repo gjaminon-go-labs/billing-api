@@ -6,6 +6,8 @@
 
 Billing microservice for the go-labs platform handling client management, invoicing, and payment operations.
 
+Now with automatic versioning and container builds!
+
 ## 🚀 Quick Start
 
 ```bash
