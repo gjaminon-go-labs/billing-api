@@ -123,7 +123,11 @@ func (c *Container) GetHTTPServer() (*httpserver.Server, error) {
 			c.setError("http_server", NewProviderError("http_server", err))
 			return
 		}
-		c.httpServer = HTTPServerProvider(billingService)
+		version := c.config.Version
+		if version == "" {
+			version = "dev"
+		}
+		c.httpServer = HTTPServerProvider(billingService, version)
 	})
 
 	if err := c.getError("http_server"); err != nil {

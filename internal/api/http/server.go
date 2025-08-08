@@ -15,15 +15,22 @@ type Server struct {
 	clientHandler  *handlers.ClientHandler
 	healthHandler  *handlers.HealthHandler
 	errorHandler   *middleware.ErrorHandler
+	version        string
 }
 
 // NewServer creates a new HTTP server with dependencies
 func NewServer(billingService *application.BillingService) *Server {
+	return NewServerWithVersion(billingService, "dev")
+}
+
+// NewServerWithVersion creates a new HTTP server with dependencies and version
+func NewServerWithVersion(billingService *application.BillingService, version string) *Server {
 	return &Server{
 		billingService: billingService,
 		clientHandler:  handlers.NewClientHandler(billingService),
-		healthHandler:  handlers.NewHealthHandler(),
+		healthHandler:  handlers.NewHealthHandler(version),
 		errorHandler:   middleware.NewErrorHandler(),
+		version:        version,
 	}
 }
 

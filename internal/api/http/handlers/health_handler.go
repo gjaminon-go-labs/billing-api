@@ -6,11 +6,15 @@ import (
 )
 
 // HealthHandler handles health check requests
-type HealthHandler struct{}
+type HealthHandler struct {
+	version string
+}
 
 // NewHealthHandler creates a new health handler
-func NewHealthHandler() *HealthHandler {
-	return &HealthHandler{}
+func NewHealthHandler(version string) *HealthHandler {
+	return &HealthHandler{
+		version: version,
+	}
 }
 
 // HealthResponse represents the health check response
@@ -31,7 +35,7 @@ func (h *HealthHandler) Health(w http.ResponseWriter, r *http.Request) {
 	response := HealthResponse{
 		Status:  "healthy",
 		Service: "billing-service",
-		Version: "1.0.0",
+		Version: h.version,
 	}
 
 	w.Header().Set("Content-Type", "application/json")

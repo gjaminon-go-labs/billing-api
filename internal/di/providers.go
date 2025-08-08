@@ -159,8 +159,8 @@ func BillingServiceProvider(clientRepo repository.ClientRepository) *application
 }
 
 // HTTPServerProvider creates an HTTP server with the given services
-func HTTPServerProvider(billingService *application.BillingService) *httpserver.Server {
-	return httpserver.NewServer(billingService)
+func HTTPServerProvider(billingService *application.BillingService, version string) *httpserver.Server {
+	return httpserver.NewServerWithVersion(billingService, version)
 }
 
 // ProviderError represents an error in provider creation

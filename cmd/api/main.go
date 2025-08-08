@@ -52,8 +52,8 @@ func run() error {
 	}
 	log.Printf("✅ Configuration loaded for %s environment", environment)
 
-	// 2. Create DI container
-	container, err := config.NewProductionContainerFromEnvironment(environment)
+	// 2. Create DI container with version information
+	container, err := config.NewProductionContainerFromEnvironmentWithVersion(environment, Version)
 	if err != nil {
 		return fmt.Errorf("failed to create DI container: %w", err)
 	}
