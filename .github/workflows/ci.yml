@@ -127,12 +127,12 @@ jobs:
       # Run integration tests
       - name: Run integration tests
         env:
-          # Database connection for tests
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/go-labs-tst?sslmode=disable&search_path=billing
+          # Database connection for tests (using application user)
+          DATABASE_URL: postgresql://billing_app_tst_user:billing_app_tst_2025@localhost:5432/go-labs-tst?sslmode=disable&search_path=billing
           DB_HOST: localhost
           DB_PORT: 5432
-          DB_USER: postgres
-          DB_PASSWORD: postgres
+          DB_USER: billing_app_tst_user
+          DB_PASSWORD: billing_app_tst_2025
           DB_NAME: go-labs-tst
           DB_SSLMODE: disable
           APP_ENV: test
