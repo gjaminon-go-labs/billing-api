@@ -133,7 +133,12 @@ func TestClientHandler_GetClient_InvalidUUID(t *testing.T) {
 			err := json.Unmarshal(w.Body.Bytes(), &response)
 			assert.NoError(t, err, "Response should be valid JSON")
 			assert.False(t, response.Success, "Response should indicate failure")
-			assert.Contains(t, response.Error.Code, "VALIDATION", "Error code should indicate validation error")
+			// Empty ID results in path not found, not validation error
+			if invalidID == "" {
+				assert.Contains(t, response.Error.Code, "INVALID_PATH", "Error code should indicate invalid path for empty ID")
+			} else {
+				assert.Contains(t, response.Error.Code, "VALIDATION", "Error code should indicate validation error")
+			}
 		})
 	}
 }

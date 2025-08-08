@@ -132,8 +132,9 @@ func TestClientHandler_UpdateClient_PartialUpdate(t *testing.T) {
 	clientData, ok := response.Data.(map[string]interface{})
 	assert.True(t, ok, "Response data should be client object")
 	assert.Equal(t, partialUpdateScenario.Request.Name, clientData["name"], "Client name should be updated")
-	assert.Equal(t, "", clientData["phone"], "Client phone should be cleared")
-	assert.Equal(t, "", clientData["address"], "Client address should be cleared")
+	// When fields are empty, they are omitted from JSON response due to omitempty tags
+	assert.Nil(t, clientData["phone"], "Client phone should be omitted when empty")
+	assert.Nil(t, clientData["address"], "Client address should be omitted when empty")
 }
 
 // BUSINESS_TITLE: Handle Non-existent Client Updates
