@@ -89,6 +89,9 @@ jobs:
       - name: Provision test database
         working-directory: infrastructure
         run: |
+          # Use CI environment file for test database provisioning
+          cp dependencies/database/config/.env.ci dependencies/database/config/.env.tst
+          
           chmod +x scripts/provision-database.sh
           ./scripts/provision-database.sh tst
           # This creates go-labs-tst with billing schema
