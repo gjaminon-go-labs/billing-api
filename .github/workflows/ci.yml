@@ -93,7 +93,8 @@ jobs:
           cp dependencies/database/config/.env.ci dependencies/database/config/.env.tst
           
           chmod +x scripts/provision-database.sh
-          ./scripts/provision-database.sh tst
+          # Auto-answer 'y' to confirmation prompt for test environment
+          echo "y" | ./scripts/provision-database.sh tst
           # This creates go-labs-tst with billing schema
 
       # 10. Run database migrations
