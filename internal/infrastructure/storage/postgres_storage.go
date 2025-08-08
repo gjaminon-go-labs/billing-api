@@ -41,6 +41,12 @@ func NewPostgreSQLStorage(db *gorm.DB) *PostgreSQLStorage {
 	return storage
 }
 
+// NewPostgreSQLStorageWithDB is an alias for NewPostgreSQLStorage that makes it clear
+// it can accept a transaction or custom DB connection (used for test isolation)
+func NewPostgreSQLStorageWithDB(db *gorm.DB) *PostgreSQLStorage {
+	return NewPostgreSQLStorage(db)
+}
+
 // Store saves a value with the given key
 func (s *PostgreSQLStorage) Store(key string, value interface{}) error {
 	// Serialize value to JSON

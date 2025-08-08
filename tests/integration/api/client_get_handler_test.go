@@ -29,8 +29,9 @@ func TestClientHandler_GetClient_Success(t *testing.T) {
 	scenarios := loadGetClientScenarios(t)
 	validScenario := scenarios[0] // "Valid Get Client Scenario"
 
-	// Setup integration test server
-	stack := testhelpers.NewIntegrationTestStack()
+	// Setup integration test server with transaction isolation
+	stack, cleanup := testhelpers.WithTransaction(t)
+	defer cleanup()
 
 	// Create a client first
 	now := time.Now().UTC()
@@ -82,8 +83,9 @@ func TestClientHandler_GetClient_NotFound(t *testing.T) {
 	scenarios := loadGetClientScenarios(t)
 	nonExistentID := scenarios[3].NonExistentIDs[0] // First non-existent ID
 
-	// Setup integration test server
-	stack := testhelpers.NewIntegrationTestStack()
+	// Setup integration test server with transaction isolation
+	stack, cleanup := testhelpers.WithTransaction(t)
+	defer cleanup()
 
 	// Test GET request with non-existent ID
 	url := fmt.Sprintf("/api/v1/clients/%s", nonExistentID)
@@ -113,8 +115,9 @@ func TestClientHandler_GetClient_InvalidUUID(t *testing.T) {
 	scenarios := loadGetClientScenarios(t)
 	invalidIDs := scenarios[2].InvalidIDs // Invalid UUID scenarios
 
-	// Setup integration test server
-	stack := testhelpers.NewIntegrationTestStack()
+	// Setup integration test server with transaction isolation
+	stack, cleanup := testhelpers.WithTransaction(t)
+	defer cleanup()
 
 	for _, invalidID := range invalidIDs {
 		t.Run("InvalidID_"+invalidID, func(t *testing.T) {
