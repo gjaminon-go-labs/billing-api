@@ -84,8 +84,9 @@ func TestBillingService_CreateClient(t *testing.T) {
 // BUSINESS_VALUE: Validates that business logic layer works correctly, ensures data integrity, confirms proper service orchestration
 // SCENARIOS_TESTED: Service layer coordination, business rule application, data persistence validation
 func TestBillingService_ListClients_IntegrationTest(t *testing.T) {
-	// Set up dependencies with PostgreSQL storage
-	stack := testhelpers.NewCleanIntegrationTestStack()
+	// Set up dependencies with PostgreSQL storage using transaction isolation
+	stack, cleanup := testhelpers.WithTransaction(t)
+	defer cleanup()
 	service := stack.BillingService
 
 	// Load test client fixtures
