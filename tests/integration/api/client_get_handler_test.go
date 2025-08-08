@@ -30,7 +30,7 @@ func TestClientHandler_GetClient_Success(t *testing.T) {
 	validScenario := scenarios[0] // "Valid Get Client Scenario"
 
 	// Setup integration test server
-	server := testhelpers.NewIntegrationTestServer(t)
+	stack := testhelpers.NewIntegrationTestStack()
 
 	// Create a client first
 	now := time.Now().UTC()
@@ -45,7 +45,7 @@ func TestClientHandler_GetClient_Success(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	err = server.ClientRepository.Save(client)
+	err = stack.ClientRepo.Save(client)
 	require.NoError(t, err)
 
 	// Test GET request
@@ -54,7 +54,7 @@ func TestClientHandler_GetClient_Success(t *testing.T) {
 	req.RemoteAddr = "192.0.2.1:1234"
 
 	w := httptest.NewRecorder()
-	server.HTTPHandler.ServeHTTP(w, req)
+	stack.HTTPServer.Handler().ServeHTTP(w, req)
 
 	// Assertions - this should FAIL until implemented
 	assert.Equal(t, http.StatusOK, w.Code, "Should return 200 OK")
@@ -83,7 +83,7 @@ func TestClientHandler_GetClient_NotFound(t *testing.T) {
 	nonExistentID := scenarios[3].NonExistentIDs[0] // First non-existent ID
 
 	// Setup integration test server
-	server := testhelpers.NewIntegrationTestServer(t)
+	stack := testhelpers.NewIntegrationTestStack()
 
 	// Test GET request with non-existent ID
 	url := fmt.Sprintf("/api/v1/clients/%s", nonExistentID)
@@ -91,7 +91,7 @@ func TestClientHandler_GetClient_NotFound(t *testing.T) {
 	req.RemoteAddr = "192.0.2.1:1234"
 
 	w := httptest.NewRecorder()
-	server.HTTPHandler.ServeHTTP(w, req)
+	stack.HTTPServer.Handler().ServeHTTP(w, req)
 
 	// Assertions - this should FAIL until implemented
 	assert.Equal(t, http.StatusNotFound, w.Code, "Should return 404 Not Found")
@@ -114,7 +114,7 @@ func TestClientHandler_GetClient_InvalidUUID(t *testing.T) {
 	invalidIDs := scenarios[2].InvalidIDs // Invalid UUID scenarios
 
 	// Setup integration test server
-	server := testhelpers.NewIntegrationTestServer(t)
+	stack := testhelpers.NewIntegrationTestStack()
 
 	for _, invalidID := range invalidIDs {
 		t.Run("InvalidID_"+invalidID, func(t *testing.T) {
@@ -124,7 +124,7 @@ func TestClientHandler_GetClient_InvalidUUID(t *testing.T) {
 			req.RemoteAddr = "192.0.2.1:1234"
 
 			w := httptest.NewRecorder()
-			server.HTTPHandler.ServeHTTP(w, req)
+			stack.HTTPServer.Handler().ServeHTTP(w, req)
 
 			// Assertions - this should FAIL until implemented
 			assert.Equal(t, http.StatusBadRequest, w.Code, "Should return 400 Bad Request for invalid ID: %s", invalidID)

@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -30,7 +31,7 @@ func TestClientHandler_UpdateClient_Success(t *testing.T) {
 	fullUpdateScenario := scenarios[0] // "Full Update Request"
 
 	// Setup integration test server
-	server := testhelpers.NewIntegrationTestServer(t)
+	stack := testhelpers.NewIntegrationTestStack()
 
 	// Create the original client
 	originalClient, err := entity.NewClientWithID(
@@ -39,10 +40,12 @@ func TestClientHandler_UpdateClient_Success(t *testing.T) {
 		fullUpdateScenario.ExpectedClient.Email,
 		"+1234567890",                        // Original phone
 		"123 Main Street, Anytown, ST 12345", // Original address
+		time.Now(),
+		time.Now(),
 	)
 	require.NoError(t, err)
 
-	err = server.ClientRepository.Save(originalClient)
+	err = stack.ClientRepo.Save(originalClient)
 	require.NoError(t, err)
 
 	// Prepare update request
@@ -56,7 +59,7 @@ func TestClientHandler_UpdateClient_Success(t *testing.T) {
 	req.RemoteAddr = "192.0.2.1:1234"
 
 	w := httptest.NewRecorder()
-	server.HTTPHandler.ServeHTTP(w, req)
+	stack.HTTPServer.Handler().ServeHTTP(w, req)
 
 	// Assertions - this should FAIL until implemented
 	assert.Equal(t, http.StatusOK, w.Code, "Should return 200 OK")
@@ -87,7 +90,7 @@ func TestClientHandler_UpdateClient_PartialUpdate(t *testing.T) {
 	partialUpdateScenario := scenarios[1] // "Partial Update Request - Name Only"
 
 	// Setup integration test server
-	server := testhelpers.NewIntegrationTestServer(t)
+	stack := testhelpers.NewIntegrationTestStack()
 
 	// Create the original client
 	originalClient, err := entity.NewClientWithID(
@@ -96,10 +99,12 @@ func TestClientHandler_UpdateClient_PartialUpdate(t *testing.T) {
 		partialUpdateScenario.ExpectedClient.Email,
 		"+1234567890",                        // Original phone (should be cleared)
 		"123 Main Street, Anytown, ST 12345", // Original address (should be cleared)
+		time.Now(),
+		time.Now(),
 	)
 	require.NoError(t, err)
 
-	err = server.ClientRepository.Save(originalClient)
+	err = stack.ClientRepo.Save(originalClient)
 	require.NoError(t, err)
 
 	// Prepare partial update request
@@ -113,7 +118,7 @@ func TestClientHandler_UpdateClient_PartialUpdate(t *testing.T) {
 	req.RemoteAddr = "192.0.2.1:1234"
 
 	w := httptest.NewRecorder()
-	server.HTTPHandler.ServeHTTP(w, req)
+	stack.HTTPServer.Handler().ServeHTTP(w, req)
 
 	// Assertions - this should FAIL until implemented
 	assert.Equal(t, http.StatusOK, w.Code, "Should return 200 OK")
@@ -145,7 +150,7 @@ func TestClientHandler_UpdateClient_NotFound(t *testing.T) {
 	updateRequest := updateScenarios[0].Request // Any valid update request
 
 	// Setup integration test server
-	server := testhelpers.NewIntegrationTestServer(t)
+	stack := testhelpers.NewIntegrationTestStack()
 
 	// Prepare update request
 	requestBody, err := json.Marshal(updateRequest)
@@ -158,7 +163,7 @@ func TestClientHandler_UpdateClient_NotFound(t *testing.T) {
 	req.RemoteAddr = "192.0.2.1:1234"
 
 	w := httptest.NewRecorder()
-	server.HTTPHandler.ServeHTTP(w, req)
+	stack.HTTPServer.Handler().ServeHTTP(w, req)
 
 	// Assertions - this should FAIL until implemented
 	assert.Equal(t, http.StatusNotFound, w.Code, "Should return 404 Not Found")
@@ -181,7 +186,7 @@ func TestClientHandler_UpdateClient_ValidationError(t *testing.T) {
 	invalidRequests := scenarios[3].InvalidRequests // "Invalid Update Requests"
 
 	// Setup integration test server
-	server := testhelpers.NewIntegrationTestServer(t)
+	stack := testhelpers.NewIntegrationTestStack()
 
 	// Create a test client
 	validClient, err := entity.NewClientWithID(
@@ -190,10 +195,12 @@ func TestClientHandler_UpdateClient_ValidationError(t *testing.T) {
 		"test@example.com",
 		"+1234567890",
 		"Test Address",
+		time.Now(),
+		time.Now(),
 	)
 	require.NoError(t, err)
 
-	err = server.ClientRepository.Save(validClient)
+	err = stack.ClientRepo.Save(validClient)
 	require.NoError(t, err)
 
 	for _, invalidRequest := range invalidRequests {
@@ -209,7 +216,7 @@ func TestClientHandler_UpdateClient_ValidationError(t *testing.T) {
 			req.RemoteAddr = "192.0.2.1:1234"
 
 			w := httptest.NewRecorder()
-			server.HTTPHandler.ServeHTTP(w, req)
+			stack.HTTPServer.Handler().ServeHTTP(w, req)
 
 			// Assertions - this should FAIL until implemented
 			assert.Equal(t, http.StatusBadRequest, w.Code, "Should return 400 Bad Request for: %s", invalidRequest.Description)
@@ -230,7 +237,7 @@ func TestClientHandler_UpdateClient_ValidationError(t *testing.T) {
 // SCENARIOS_TESTED: Malformed JSON returns 400 Bad Request with appropriate error message
 func TestClientHandler_UpdateClient_InvalidJSON(t *testing.T) {
 	// Setup integration test server
-	server := testhelpers.NewIntegrationTestServer(t)
+	stack := testhelpers.NewIntegrationTestStack()
 
 	// Create a test client
 	validClient, err := entity.NewClientWithID(
@@ -239,10 +246,12 @@ func TestClientHandler_UpdateClient_InvalidJSON(t *testing.T) {
 		"test@example.com",
 		"+1234567890",
 		"Test Address",
+		time.Now(),
+		time.Now(),
 	)
 	require.NoError(t, err)
 
-	err = server.ClientRepository.Save(validClient)
+	err = stack.ClientRepo.Save(validClient)
 	require.NoError(t, err)
 
 	// Test PUT request with invalid JSON
@@ -253,7 +262,7 @@ func TestClientHandler_UpdateClient_InvalidJSON(t *testing.T) {
 	req.RemoteAddr = "192.0.2.1:1234"
 
 	w := httptest.NewRecorder()
-	server.HTTPHandler.ServeHTTP(w, req)
+	stack.HTTPServer.Handler().ServeHTTP(w, req)
 
 	// Assertions - this should FAIL until implemented
 	assert.Equal(t, http.StatusBadRequest, w.Code, "Should return 400 Bad Request")

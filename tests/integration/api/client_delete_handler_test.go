@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -25,8 +26,8 @@ func TestClientHandler_DeleteClient_Success(t *testing.T) {
 	scenarios := loadGetClientScenarios(t)
 	validScenario := scenarios[0] // "Valid Get Client Scenario"
 
-	// Setup integration test server
-	server := testhelpers.NewIntegrationTestServer()
+	// Setup integration test stack
+	stack := testhelpers.NewIntegrationTestStack()
 
 	// Create a client first
 	client, err := entity.NewClientWithID(
@@ -35,14 +36,16 @@ func TestClientHandler_DeleteClient_Success(t *testing.T) {
 		validScenario.Client.Email,
 		validScenario.Client.Phone,
 		validScenario.Client.Address,
+		time.Now(),
+		time.Now(),
 	)
 	require.NoError(t, err)
 
-	err = server.ClientRepository.Save(client)
+	err = stack.ClientRepo.Save(client)
 	require.NoError(t, err)
 
 	// Verify client exists before deletion
-	existingClient, err := server.ClientRepository.GetByID(validScenario.Client.ID)
+	existingClient, err := stack.ClientRepo.GetByID(validScenario.Client.ID)
 	require.NoError(t, err, "Client should exist before deletion")
 	require.NotNil(t, existingClient, "Client should exist before deletion")
 
@@ -52,14 +55,14 @@ func TestClientHandler_DeleteClient_Success(t *testing.T) {
 	req.RemoteAddr = "192.0.2.1:1234"
 
 	w := httptest.NewRecorder()
-	server.HTTPHandler.ServeHTTP(w, req)
+	stack.HTTPServer.Handler().ServeHTTP(w, req)
 
 	// Assertions - this should FAIL until implemented
 	assert.Equal(t, http.StatusNoContent, w.Code, "Should return 204 No Content")
 	assert.Empty(t, w.Body.String(), "Response body should be empty for 204")
 
 	// Verify client no longer exists
-	deletedClient, err := server.ClientRepository.GetByID(validScenario.Client.ID)
+	deletedClient, err := stack.ClientRepo.GetByID(validScenario.Client.ID)
 	assert.Error(t, err, "Client should not exist after deletion")
 	assert.Nil(t, deletedClient, "Client should be nil after deletion")
 }
@@ -75,7 +78,7 @@ func TestClientHandler_DeleteClient_NotFound(t *testing.T) {
 	nonExistentID := scenarios[3].NonExistentIDs[0] // First non-existent ID
 
 	// Setup integration test server
-	server := testhelpers.NewIntegrationTestServer()
+	stack := testhelpers.NewIntegrationTestStack()
 
 	// Test DELETE request with non-existent ID
 	url := fmt.Sprintf("/api/v1/clients/%s", nonExistentID)
@@ -83,7 +86,7 @@ func TestClientHandler_DeleteClient_NotFound(t *testing.T) {
 	req.RemoteAddr = "192.0.2.1:1234"
 
 	w := httptest.NewRecorder()
-	server.HTTPHandler.ServeHTTP(w, req)
+	stack.HTTPServer.Handler().ServeHTTP(w, req)
 
 	// Assertions - this should FAIL until implemented
 	assert.Equal(t, http.StatusNotFound, w.Code, "Should return 404 Not Found")
@@ -106,7 +109,7 @@ func TestClientHandler_DeleteClient_InvalidUUID(t *testing.T) {
 	invalidIDs := scenarios[2].InvalidIDs // Invalid UUID scenarios
 
 	// Setup integration test server
-	server := testhelpers.NewIntegrationTestServer()
+	stack := testhelpers.NewIntegrationTestStack()
 
 	for _, invalidID := range invalidIDs {
 		t.Run("InvalidID_"+invalidID, func(t *testing.T) {
@@ -116,7 +119,7 @@ func TestClientHandler_DeleteClient_InvalidUUID(t *testing.T) {
 			req.RemoteAddr = "192.0.2.1:1234"
 
 			w := httptest.NewRecorder()
-			server.HTTPHandler.ServeHTTP(w, req)
+			stack.HTTPServer.Handler().ServeHTTP(w, req)
 
 			// Assertions - this should FAIL until implemented
 			assert.Equal(t, http.StatusBadRequest, w.Code, "Should return 400 Bad Request for invalid ID: %s", invalidID)
