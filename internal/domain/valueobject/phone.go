@@ -9,7 +9,7 @@ import (
 
 // Phone represents a validated phone number value object
 type Phone struct {
-	value string `json:"value"`
+	value string
 }
 
 // NewPhone creates a new Phone value object with validation

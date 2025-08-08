@@ -9,7 +9,7 @@ import (
 
 // Email represents a validated email address value object
 type Email struct {
-	value string `json:"value"`
+	value string
 }
 
 // NewEmail creates a new Email value object with validation

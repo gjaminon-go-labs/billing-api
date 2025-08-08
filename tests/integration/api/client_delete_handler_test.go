@@ -26,7 +26,7 @@ func TestClientHandler_DeleteClient_Success(t *testing.T) {
 	validScenario := scenarios[0] // "Valid Get Client Scenario"
 
 	// Setup integration test server
-	server := testhelpers.NewIntegrationTestServer(t)
+	server := testhelpers.NewIntegrationTestServer()
 	defer server.Close()
 
 	// Create a client first
@@ -76,7 +76,7 @@ func TestClientHandler_DeleteClient_NotFound(t *testing.T) {
 	nonExistentID := scenarios[3].NonExistentIDs[0] // First non-existent ID
 
 	// Setup integration test server
-	server := testhelpers.NewIntegrationTestServer(t)
+	server := testhelpers.NewIntegrationTestServer()
 	defer server.Close()
 
 	// Test DELETE request with non-existent ID
@@ -108,7 +108,7 @@ func TestClientHandler_DeleteClient_InvalidUUID(t *testing.T) {
 	invalidIDs := scenarios[2].InvalidIDs // Invalid UUID scenarios
 
 	// Setup integration test server
-	server := testhelpers.NewIntegrationTestServer(t)
+	server := testhelpers.NewIntegrationTestServer()
 	defer server.Close()
 
 	for _, invalidID := range invalidIDs {
