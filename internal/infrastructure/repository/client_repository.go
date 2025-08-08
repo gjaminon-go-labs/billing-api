@@ -96,6 +96,37 @@ func (r *ClientRepositoryImpl) deserializeClient(clientMap map[string]interface{
 	return &client, nil
 }
 
+// CountClients returns the total number of clients
+func (r *ClientRepositoryImpl) CountClients() (int, error) {
+	clients, err := r.GetAll()
+	if err != nil {
+		return 0, err
+	}
+	return len(clients), nil
+}
+
+// ListClientsWithPagination retrieves clients with pagination
+func (r *ClientRepositoryImpl) ListClientsWithPagination(offset, limit int) ([]*entity.Client, error) {
+	// Get all clients first (for simplicity with in-memory storage)
+	allClients, err := r.GetAll()
+	if err != nil {
+		return nil, err
+	}
+	
+	// Apply pagination
+	start := offset
+	if start > len(allClients) {
+		return []*entity.Client{}, nil
+	}
+	
+	end := start + limit
+	if end > len(allClients) {
+		end = len(allClients)
+	}
+	
+	return allClients[start:end], nil
+}
+
 // GetByID retrieves a client entity by ID
 func (r *ClientRepositoryImpl) GetByID(id string) (*entity.Client, error) {
 	// Get value from storage

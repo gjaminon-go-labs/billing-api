@@ -22,8 +22,23 @@ func NewBillingService(clientRepo repository.ClientRepository) *BillingService {
 	}
 }
 
-// CreateClient creates a new client with the provided details and persists it
-func (s *BillingService) CreateClient(name, email, phone, address string) (*entity.Client, error) {
+// CreateClient creates a new client from a DTO request
+func (s *BillingService) CreateClient(req dtos.CreateClientRequest) (*entity.Client, error) {
+	client, err := entity.NewClient(req.Name, req.Email, req.Phone, req.Address)
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.clientRepo.Save(client)
+	if err != nil {
+		return nil, err
+	}
+
+	return client, nil
+}
+
+// CreateClientLegacy creates a new client with the provided details and persists it (for backward compatibility)
+func (s *BillingService) CreateClientLegacy(name, email, phone, address string) (*entity.Client, error) {
 	client, err := entity.NewClient(name, email, phone, address)
 	if err != nil {
 		return nil, err
@@ -40,6 +55,54 @@ func (s *BillingService) CreateClient(name, email, phone, address string) (*enti
 // ListClients retrieves all clients from the repository
 func (s *BillingService) ListClients() ([]*entity.Client, error) {
 	return s.clientRepo.GetAll()
+}
+
+// PaginatedClients represents clients with pagination metadata
+type PaginatedClients struct {
+	Clients    []*entity.Client
+	Pagination PaginationMeta
+}
+
+// PaginationMeta contains pagination metadata
+type PaginationMeta struct {
+	Page       int
+	Limit      int
+	TotalCount int
+	TotalPages int
+}
+
+// ListClientsWithPagination retrieves clients with pagination
+func (s *BillingService) ListClientsWithPagination(page, limit int) (*PaginatedClients, error) {
+	// Calculate offset
+	offset := (page - 1) * limit
+	
+	// Get total count
+	totalCount, err := s.clientRepo.CountClients()
+	if err != nil {
+		return nil, err
+	}
+	
+	// Calculate total pages
+	totalPages := totalCount / limit
+	if totalCount%limit > 0 {
+		totalPages++
+	}
+	
+	// Get paginated results
+	clients, err := s.clientRepo.ListClientsWithPagination(offset, limit)
+	if err != nil {
+		return nil, err
+	}
+	
+	return &PaginatedClients{
+		Clients: clients,
+		Pagination: PaginationMeta{
+			Page:       page,
+			Limit:      limit,
+			TotalCount: totalCount,
+			TotalPages: totalPages,
+		},
+	}, nil
 }
 
 // GetClientByID retrieves a client by ID
