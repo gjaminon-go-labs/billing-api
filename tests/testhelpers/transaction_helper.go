@@ -83,7 +83,7 @@ func NewTransactionalTestStack(t *testing.T, tx *gorm.DB) *IntegrationTestStack 
 	if err != nil {
 		t.Fatalf("Failed to get storage: %v", err)
 	}
-	
+
 	return &IntegrationTestStack{
 		Container:      container,
 		Storage:        stor,
