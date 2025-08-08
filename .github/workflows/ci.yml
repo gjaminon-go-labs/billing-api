@@ -7,26 +7,27 @@ on:
     branches: [main]
 
 jobs:
-  test-and-lint:
-    name: Test, Lint and Coverage
+  # Job 1: Unit tests and code quality (no dependencies needed)
+  unit-tests-and-lint:
+    name: Unit Tests, Lint and Build
     runs-on: ubuntu-latest
-
+    
     steps:
-      # 1. Checkout Code
+      # Checkout code
       - uses: actions/checkout@v4
 
-      # 2. Setup Go with built-in caching
+      # Setup Go with caching
       - uses: actions/setup-go@v5
         with:
-          go-version: '1.22'
+          go-version: '1.24'
           cache: true
           cache-dependency-path: go.sum
 
-      # 3. Download dependencies
+      # Download dependencies
       - name: Download dependencies
         run: go mod download
 
-      # 4. Code Formatting Check
+      # Code formatting check
       - name: Check formatting
         run: |
           if [ -n "$(gofmt -l .)" ]; then
@@ -35,38 +36,176 @@ jobs:
             exit 1
           fi
 
-      # 5. Basic Linting
+      # Linting
       - name: Run go vet
         run: go vet ./...
 
-      # 6. Build Verification
+      # Build verification
       - name: Build
         run: go build -v ./...
 
-      # 7. Unit Tests
+      # Unit tests (no database needed)
       - name: Run unit tests
-        run: go test -v -race -coverprofile=coverage.out ./tests/unit/...
+        run: go test -v -race -coverprofile=coverage-unit.out ./tests/unit/...
 
-      - name: Upload coverage artifact
+      # Upload unit test coverage
+      - name: Upload unit test coverage
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-report
-          path: coverage.out
+          name: coverage-unit
+          path: coverage-unit.out
 
-      # 8. Upload to Codecov
+  # Job 2: Integration tests (needs application dependencies)
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: unit-tests-and-lint  # Only run if unit tests pass
+    
+    # PostgreSQL service container
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+      # Checkout code
+      - uses: actions/checkout@v4
+
+      # Setup Go with caching
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+          cache: true
+          cache-dependency-path: go.sum
+
+      # Download dependencies
+      - name: Download dependencies
+        run: go mod download
+
+      # Clone infrastructure repository for dependency provisioning
+      - name: Clone infrastructure repository
+        uses: actions/checkout@v4
+        with:
+          repository: gjaminon-go-labs/infrastructure
+          path: infrastructure
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # Provision all application dependencies
+      - name: Provision application dependencies
+        working-directory: infrastructure
+        run: |
+          # Setup CI environment configuration
+          cp dependencies/database/config/.env.ci dependencies/database/config/.env.tst
+          
+          # Run generic provisioning script (handles all dependencies)
+          chmod +x scripts/provision-dependencies.sh
+          echo "y" | ./scripts/provision-dependencies.sh tst
+
+      # Setup migration tool and run migrations
+      - name: Setup and run database migrations
+        run: |
+          # Install golang-migrate
+          curl -L https://github.com/golang-migrate/migrate/releases/download/v4.17.0/migrate.linux-amd64.tar.gz | tar xvz
+          sudo mv migrate /usr/local/bin/
+          migrate -version
+          
+          # Run migrations as migration user (provisioned by infrastructure)
+          migrate -path database/migrations \
+            -database "postgresql://billing_migration_tst_user:billing_migration_tst_2025@localhost:5432/go-labs-tst?sslmode=disable&search_path=billing" \
+            up
+
+      # Run integration tests
+      - name: Run integration tests
+        env:
+          # Database connection for tests (using application user)
+          DATABASE_URL: postgresql://billing_app_tst_user:billing_app_tst_2025@localhost:5432/go-labs-tst?sslmode=disable&search_path=billing
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_USER: billing_app_tst_user
+          DB_PASSWORD: billing_app_tst_2025
+          DB_NAME: go-labs-tst
+          DB_SSLMODE: disable
+          APP_ENV: test
+        run: go test -v -race -coverprofile=coverage-integration.out ./tests/integration/...
+
+      # Upload integration test coverage
+      - name: Upload integration test coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-integration
+          path: coverage-integration.out
+
+  # Job 3: Merge coverage reports and upload to Codecov
+  coverage:
+    name: Coverage Report
+    runs-on: ubuntu-latest
+    needs: [unit-tests-and-lint, integration-tests]
+    if: always() && needs.unit-tests-and-lint.result == 'success'  # Run even if integration tests fail
+    
+    steps:
+      # Checkout for codecov
+      - uses: actions/checkout@v4
+
+      # Download unit test coverage
+      - name: Download unit test coverage
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-unit
+
+      # Download integration test coverage (if available)
+      - name: Download integration test coverage
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-integration
+        continue-on-error: true  # Don't fail if integration tests didn't run
+
+      # Merge coverage reports
+      - name: Merge coverage reports
+        run: |
+          echo "mode: set" > coverage.out
+          
+          # Add unit test coverage
+          if [ -f coverage-unit.out ]; then
+            tail -n +2 coverage-unit.out >> coverage.out
+            echo "Added unit test coverage"
+          fi
+          
+          # Add integration test coverage if available
+          if [ -f coverage-integration.out ]; then
+            tail -n +2 coverage-integration.out >> coverage.out
+            echo "Added integration test coverage"
+          fi
+          
+          # Display coverage summary
+          if command -v go &> /dev/null; then
+            go tool cover -func=coverage.out || true
+          fi
+
+      # Upload to Codecov
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
           file: ./coverage.out
-          flags: unittests
+          flags: unittests,integration
           name: billing-api
           fail_ci_if_error: false
           verbose: true
 
+  # Job 4: Claude Code Review (runs only after all tests pass to save tokens)
   claude-review:
     name: Claude Code Review
     runs-on: ubuntu-latest
-    needs: test-and-lint  # Only run if tests pass
+    needs: [unit-tests-and-lint, integration-tests]  # Only run after ALL tests pass
     if: github.event_name == 'pull_request'  # Only run on PRs
     permissions:
       contents: write

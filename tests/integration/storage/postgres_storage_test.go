@@ -10,7 +10,8 @@ import (
 
 func TestPostgreSQLStorage_ListAll_EmptyStorage(t *testing.T) {
 	// Arrange
-	stack := testhelpers.NewCleanIntegrationTestStack()
+	stack, cleanup := testhelpers.WithTransaction(t)
+	defer cleanup()
 	postgresStorage, ok := stack.Storage.(*storage.PostgreSQLStorage)
 	assert.True(t, ok, "Expected PostgreSQL storage in integration test")
 
@@ -25,7 +26,8 @@ func TestPostgreSQLStorage_ListAll_EmptyStorage(t *testing.T) {
 
 func TestPostgreSQLStorage_ListAll_WithMultipleItems(t *testing.T) {
 	// Arrange
-	stack := testhelpers.NewCleanIntegrationTestStack()
+	stack, cleanup := testhelpers.WithTransaction(t)
+	defer cleanup()
 	postgresStorage, ok := stack.Storage.(*storage.PostgreSQLStorage)
 	assert.True(t, ok, "Expected PostgreSQL storage in integration test")
 
@@ -69,7 +71,8 @@ func TestPostgreSQLStorage_ListAll_WithMultipleItems(t *testing.T) {
 
 func TestPostgreSQLStorage_ListAll_SingleItem(t *testing.T) {
 	// Arrange
-	stack := testhelpers.NewCleanIntegrationTestStack()
+	stack, cleanup := testhelpers.WithTransaction(t)
+	defer cleanup()
 	postgresStorage, ok := stack.Storage.(*storage.PostgreSQLStorage)
 	assert.True(t, ok, "Expected PostgreSQL storage in integration test")
 
