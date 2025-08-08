@@ -7,8 +7,8 @@ on:
     branches: [main]
 
 jobs:
-  test:
-    name: Test and Lint
+  test-and-lint:
+    name: Test, Lint and Coverage
     runs-on: ubuntu-latest
 
     steps:
@@ -58,7 +58,7 @@ jobs:
         with:
           name: coverage-report
           path: coverage.out
-      
+
       # 8. Upload to Codecov
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
@@ -68,3 +68,87 @@ jobs:
           name: billing-api
           fail_ci_if_error: false
           verbose: true
+
+  claude-review:
+    name: Claude Code Review
+    runs-on: ubuntu-latest
+    needs: test-and-lint  # Only run if tests pass
+    if: github.event_name == 'pull_request'  # Only run on PRs
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+      actions: read  # Allow Claude to read CI results
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Run Claude Code Review
+        id: claude-review
+        uses: anthropics/claude-code-action@beta
+        continue-on-error: true  # Don't fail the CI if review fails
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+
+          # Allow Claude to read CI results
+          additional_permissions: |
+            actions: read
+
+          # Direct prompt for automated Go code review
+          direct_prompt: |
+            Please review this Go pull request focusing on:
+
+            ## Code Quality
+            - Go best practices and idiomatic code
+            - Proper error handling patterns
+            - Correct use of goroutines and channels (if applicable)
+            - Memory management and potential leaks
+
+            ## Architecture
+            - Domain-Driven Design principles compliance
+            - Repository pattern implementation
+            - Clean Architecture layer separation
+            - Dependency injection patterns
+
+            ## Testing
+            - Test coverage adequacy (minimum 70% for new code)
+            - Table-driven test patterns
+            - Unit vs integration test separation
+            - Mock usage appropriateness
+
+            ## Go-Specific Checks
+            - Proper use of interfaces
+            - Error wrapping with context
+            - Struct field tags correctness
+            - Concurrent code safety
+
+            ## TDD Workflow
+            - Verify tests were written first (Red-Green-Refactor)
+            - Check for overengineering beyond requirements
+            - Ensure minimal implementation approach
+
+            ## Security
+            - SQL injection prevention
+            - Input validation
+            - No hardcoded secrets
+            - Proper authentication/authorization
+
+            ## Performance
+            - Database query optimization
+            - N+1 query problems
+            - Unnecessary allocations
+            - Proper use of pointers vs values
+
+            Review the CI test results and coverage report.
+            Be constructive and educational in feedback.
+            Highlight both issues and good practices.
+
+          # Use sticky comments for cleaner PR experience
+          use_sticky_comment: true
+
+          # Allow Claude to run Go-specific commands for analysis
+          allowed_tools: "Bash(go test ./...),Bash(go vet ./...),Bash(go mod tidy),Bash(go fmt ./...)"
