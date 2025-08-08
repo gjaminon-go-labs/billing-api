@@ -29,12 +29,12 @@ jobs:
 
     # Environment variables for database connection
     env:
-      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/billing_test?sslmode=disable
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/go-labs-tst?sslmode=disable&search_path=billing
       DB_HOST: localhost
       DB_PORT: 5432
       DB_USER: postgres
       DB_PASSWORD: postgres
-      DB_NAME: billing_test
+      DB_NAME: go-labs-tst
       DB_SSLMODE: disable
       APP_ENV: test
 
@@ -70,28 +70,33 @@ jobs:
       - name: Build
         run: go build -v ./...
 
-      # 7. Install golang-migrate for database setup
+      # 7. Clone infrastructure repository for database provisioning
+      - name: Clone infrastructure repository
+        uses: actions/checkout@v4
+        with:
+          repository: gjaminon-go-labs/infrastructure
+          path: infrastructure
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # 8. Install golang-migrate
       - name: Install golang-migrate
         run: |
           curl -L https://github.com/golang-migrate/migrate/releases/download/v4.17.0/migrate.linux-amd64.tar.gz | tar xvz
           sudo mv migrate /usr/local/bin/
           migrate -version
 
-      # 8. Create test database
-      - name: Create test database
+      # 9. Provision test database using infrastructure scripts
+      - name: Provision test database
+        working-directory: infrastructure
         run: |
-          PGPASSWORD=postgres psql -h localhost -U postgres -c "CREATE DATABASE billing_test;"
-          PGPASSWORD=postgres psql -h localhost -U postgres -c "CREATE DATABASE billing_integration_test;"
+          chmod +x scripts/provision-database.sh
+          ./scripts/provision-database.sh tst
+          # This creates go-labs-tst with billing schema
 
-      # 9. Run migrations for unit tests database
-      - name: Run migrations for unit tests
+      # 10. Run database migrations
+      - name: Run database migrations
         run: |
-          migrate -path database/migrations -database "postgresql://postgres:postgres@localhost:5432/billing_test?sslmode=disable" up
-
-      # 10. Run migrations for integration tests database  
-      - name: Run migrations for integration tests
-        run: |
-          migrate -path database/migrations -database "postgresql://postgres:postgres@localhost:5432/billing_integration_test?sslmode=disable" up
+          migrate -path database/migrations -database "postgresql://postgres:postgres@localhost:5432/go-labs-tst?sslmode=disable&search_path=billing" up
 
       # 11. Unit Tests
       - name: Run unit tests
@@ -100,8 +105,8 @@ jobs:
       # 12. Integration Tests
       - name: Run integration tests
         env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/billing_integration_test?sslmode=disable
-          DB_NAME: billing_integration_test
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/go-labs-tst?sslmode=disable&search_path=billing
+          DB_NAME: go-labs-tst
         run: go test -v -race -coverprofile=coverage-integration.out ./tests/integration/...
 
       # 13. Merge coverage reports
