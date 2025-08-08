@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/gjaminon-go-labs/billing-api/compare/v1.0.0...v1.1.0) (2025-08-08)
+
+
+### Features
+
+* improve container tagging strategy ([0b83866](https://github.com/gjaminon-go-labs/billing-api/commit/0b83866a7845651d9dfa880c5caa748e205b7174))
+
 # [1.0.0](https://github.com/gjaminon-go-labs/billing-api/compare/v0.0.1...v1.0.0) (2025-08-08)
 
 
