@@ -1,0 +1,42 @@
+# Codecov configuration
+# https://docs.codecov.io/docs/codecov-yaml
+
+coverage:
+  # Coverage precision (number of decimal places)
+  precision: 2
+  round: down
+  
+  # Coverage range for color coding (red -> yellow -> green)
+  range: "60...90"
+  
+  status:
+    project:
+      default:
+        # Project must have at least 70% coverage
+        target: 70%
+        threshold: 2%  # Allow 2% drop in coverage
+        
+    patch:
+      default:
+        # New code must have at least 80% coverage
+        target: 80%
+        
+comment:
+  # Comment on PRs with coverage information
+  layout: "reach,diff,flags,files,footer"
+  behavior: default
+  require_changes: false  # Comment even if no coverage change
+  
+# Ignore certain files/paths from coverage
+ignore:
+  - "cmd/**"  # Main files often have low coverage
+  - "**/*_test.go"  # Test files themselves
+  - "**/mock_*.go"  # Generated mocks
+  - "tests/**"  # Test helpers
+
+# Flag different test types
+flags:
+  unittests:
+    paths:
+      - "internal/"
+    carryforward: true

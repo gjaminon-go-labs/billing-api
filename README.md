@@ -1,5 +1,9 @@
 # Billing API
 
+[![CI](https://github.com/gjaminon-go-labs/billing-api/actions/workflows/ci.yml/badge.svg)](https://github.com/gjaminon-go-labs/billing-api/actions)
+[![codecov](https://codecov.io/gh/gjaminon-go-labs/billing-api/branch/main/graph/badge.svg)](https://codecov.io/gh/gjaminon-go-labs/billing-api)
+[![Go Report Card](https://goreportcard.com/badge/github.com/gjaminon-go-labs/billing-api)](https://goreportcard.com/report/github.com/gjaminon-go-labs/billing-api)
+
 Billing microservice for the go-labs platform handling client management, invoicing, and payment operations.
 
 ## 🚀 Quick Start
