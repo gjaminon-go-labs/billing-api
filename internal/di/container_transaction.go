@@ -10,14 +10,14 @@ import (
 func NewContainerWithDB(config *ContainerConfig, db *gorm.DB) *Container {
 	// Create a normal container
 	container := NewContainer(config)
-	
+
 	// Override the storage with a custom PostgreSQL storage using the provided DB
 	customStorage := storage.NewPostgreSQLStorageWithDB(db)
 	container.storage = customStorage
-	
+
 	// Mark storage as initialized so it won't be created again
 	container.storageOnce.Do(func() {})
-	
+
 	return container
 }
 

@@ -19,13 +19,13 @@ func TransactionTest(t *testing.T, testFunc func(*testing.T, *gorm.DB)) {
 	// Get base database connection from integration test config
 	config := di.IntegrationTestConfig()
 	db := setupPostgreSQLConnection(config)
-	
+
 	// Start transaction - this is our isolation boundary
 	tx := db.Begin()
 	if tx.Error != nil {
 		t.Fatalf("Failed to begin transaction: %v", tx.Error)
 	}
-	
+
 	// CRITICAL: Always rollback - never commit test data
 	defer func() {
 		if err := tx.Rollback().Error; err != nil {
@@ -35,7 +35,7 @@ func TransactionTest(t *testing.T, testFunc func(*testing.T, *gorm.DB)) {
 			}
 		}
 	}()
-	
+
 	// Run the test with transaction
 	// All database operations in testFunc will use this transaction
 	testFunc(t, tx)
@@ -56,26 +56,26 @@ type IntegrationTestStack struct {
 func NewTransactionalTestStack(t *testing.T, tx *gorm.DB) *IntegrationTestStack {
 	// Build container with transaction instead of creating new DB connection
 	config := di.IntegrationTestConfig()
-	
+
 	// Create container with transaction using our custom method
 	container := di.NewContainerWithDB(config, tx)
-	
+
 	// Extract services from container - using error-returning methods
 	billingService, err := container.GetBillingService()
 	if err != nil {
 		t.Fatalf("Failed to get billing service: %v", err)
 	}
-	
+
 	clientRepo, err := container.GetClientRepository()
 	if err != nil {
 		t.Fatalf("Failed to get client repository: %v", err)
 	}
-	
+
 	httpServer, err := container.GetHTTPServer()
 	if err != nil {
 		t.Fatalf("Failed to get HTTP server: %v", err)
 	}
-	
+
 	return &IntegrationTestStack{
 		Container:      container,
 		BillingService: billingService,
@@ -93,16 +93,16 @@ func WithTransaction(t *testing.T) (*IntegrationTestStack, func()) {
 	// Get base database connection
 	config := di.IntegrationTestConfig()
 	db := setupPostgreSQLConnection(config)
-	
+
 	// Start transaction
 	tx := db.Begin()
 	if tx.Error != nil {
 		t.Fatalf("Failed to begin transaction: %v", tx.Error)
 	}
-	
+
 	// Create stack with transaction
 	stack := NewTransactionalTestStack(t, tx)
-	
+
 	// Cleanup function - just rollback the transaction
 	cleanup := func() {
 		if err := tx.Rollback().Error; err != nil {
@@ -111,7 +111,7 @@ func WithTransaction(t *testing.T) (*IntegrationTestStack, func()) {
 			}
 		}
 	}
-	
+
 	return stack, cleanup
 }
 
@@ -127,7 +127,7 @@ func setupPostgreSQLConnection(config *di.ContainerConfig) *gorm.DB {
 		config.DatabaseName,
 		config.DatabaseSchema,
 	)
-	
+
 	// GORM configuration
 	gormConfig := &gorm.Config{
 		// Use simple logger for tests
@@ -137,22 +137,22 @@ func setupPostgreSQLConnection(config *di.ContainerConfig) *gorm.DB {
 		// Skip default transaction for better control
 		SkipDefaultTransaction: true,
 	}
-	
+
 	// Open database connection
 	db, err := gorm.Open(postgres.Open(dsn), gormConfig)
 	if err != nil {
 		panic("Failed to connect to test database: " + err.Error())
 	}
-	
+
 	// Configure connection pool for parallel tests
 	sqlDB, err := db.DB()
 	if err != nil {
 		panic("Failed to get SQL DB: " + err.Error())
 	}
-	
+
 	// Increase pool size for parallel test execution
-	sqlDB.SetMaxOpenConns(50)  // Allow more parallel connections
-	sqlDB.SetMaxIdleConns(10)  // Keep more connections idle
-	
+	sqlDB.SetMaxOpenConns(50) // Allow more parallel connections
+	sqlDB.SetMaxIdleConns(10) // Keep more connections idle
+
 	return db
 }
