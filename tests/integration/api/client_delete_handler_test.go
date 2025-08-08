@@ -27,7 +27,8 @@ func TestClientHandler_DeleteClient_Success(t *testing.T) {
 	validScenario := scenarios[0] // "Valid Get Client Scenario"
 
 	// Setup integration test stack
-	stack := testhelpers.NewIntegrationTestStack()
+	stack, cleanup := testhelpers.WithTransaction(t)
+	defer cleanup()
 
 	// Create a client first
 	client, err := entity.NewClientWithID(
@@ -78,7 +79,8 @@ func TestClientHandler_DeleteClient_NotFound(t *testing.T) {
 	nonExistentID := scenarios[3].NonExistentIDs[0] // First non-existent ID
 
 	// Setup integration test server
-	stack := testhelpers.NewIntegrationTestStack()
+	stack, cleanup := testhelpers.WithTransaction(t)
+	defer cleanup()
 
 	// Test DELETE request with non-existent ID
 	url := fmt.Sprintf("/api/v1/clients/%s", nonExistentID)
@@ -109,7 +111,8 @@ func TestClientHandler_DeleteClient_InvalidUUID(t *testing.T) {
 	invalidIDs := scenarios[2].InvalidIDs // Invalid UUID scenarios
 
 	// Setup integration test server
-	stack := testhelpers.NewIntegrationTestStack()
+	stack, cleanup := testhelpers.WithTransaction(t)
+	defer cleanup()
 
 	for _, invalidID := range invalidIDs {
 		t.Run("InvalidID_"+invalidID, func(t *testing.T) {

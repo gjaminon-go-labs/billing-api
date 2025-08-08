@@ -19,7 +19,8 @@ import (
 // SCENARIOS_TESTED: Database storage, data retrieval, persistence validation, multi-client handling
 func TestClientRepository_GetAll_IntegrationTest(t *testing.T) {
 	// Arrange
-	stack := testhelpers.NewCleanIntegrationTestStack()
+	stack, cleanup := testhelpers.WithTransaction(t)
+	defer cleanup()
 	repo := stack.ClientRepo
 
 	// Load test fixtures
@@ -63,7 +64,8 @@ func TestClientRepository_GetAll_IntegrationTest(t *testing.T) {
 // SCENARIOS_TESTED: Empty database queries, null result handling, system stability with no data
 func TestClientRepository_GetAll_EmptyRepository_IntegrationTest(t *testing.T) {
 	// Arrange
-	stack := testhelpers.NewCleanIntegrationTestStack()
+	stack, cleanup := testhelpers.WithTransaction(t)
+	defer cleanup()
 	repo := stack.ClientRepo
 
 	// Act

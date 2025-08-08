@@ -21,7 +21,8 @@ import (
 // SCENARIOS_TESTED: Retrieving client lists with data, proper client information display, handling multiple clients
 func TestClientHandler_ListClients_IntegrationTest(t *testing.T) {
 	// Arrange - Set up integration test server with PostgreSQL storage
-	stack := testhelpers.NewCleanIntegrationTestStack()
+	stack, cleanup := testhelpers.WithTransaction(t)
+	defer cleanup()
 	server := stack.HTTPServer
 
 	// Load test fixtures
@@ -91,7 +92,8 @@ func TestClientHandler_ListClients_IntegrationTest(t *testing.T) {
 // SCENARIOS_TESTED: Empty database states, proper empty list responses, user-friendly empty state handling
 func TestClientHandler_ListClients_EmptyList_IntegrationTest(t *testing.T) {
 	// Arrange - Set up integration test server with clean PostgreSQL storage
-	stack := testhelpers.NewCleanIntegrationTestStack()
+	stack, cleanup := testhelpers.WithTransaction(t)
+	defer cleanup()
 	server := stack.HTTPServer
 
 	// Create HTTP request

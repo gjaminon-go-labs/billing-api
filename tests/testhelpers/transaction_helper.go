@@ -8,6 +8,7 @@ import (
 	"github.com/gjaminon-go-labs/billing-api/internal/application"
 	"github.com/gjaminon-go-labs/billing-api/internal/di"
 	"github.com/gjaminon-go-labs/billing-api/internal/domain/repository"
+	"github.com/gjaminon-go-labs/billing-api/internal/infrastructure/storage"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -44,6 +45,7 @@ func TransactionTest(t *testing.T, testFunc func(*testing.T, *gorm.DB)) {
 // IntegrationTestStack provides access to all components for integration tests
 type IntegrationTestStack struct {
 	Container       *di.Container
+	Storage         storage.Storage
 	BillingService  *application.BillingService
 	ClientRepo      repository.ClientRepository
 	HTTPServer      *httpserver.Server
@@ -76,8 +78,15 @@ func NewTransactionalTestStack(t *testing.T, tx *gorm.DB) *IntegrationTestStack 
 		t.Fatalf("Failed to get HTTP server: %v", err)
 	}
 
+	// Get storage from container (it's already using the transaction)
+	stor, err := container.GetStorage()
+	if err != nil {
+		t.Fatalf("Failed to get storage: %v", err)
+	}
+	
 	return &IntegrationTestStack{
 		Container:      container,
+		Storage:        stor,
 		BillingService: billingService,
 		ClientRepo:     clientRepo,
 		HTTPServer:     httpServer,

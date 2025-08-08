@@ -22,7 +22,8 @@ import (
 // SCENARIOS_TESTED: Successful client retrieval by ID, handling of non-existent client IDs, proper error reporting
 func TestClientRepository_GetByID_Success(t *testing.T) {
 	// Setup integration test stack
-	stack := testhelpers.NewCleanIntegrationTestStack()
+	stack, cleanup := testhelpers.WithTransaction(t)
+	defer cleanup()
 	repo := stack.ClientRepo
 
 	// Load test scenarios
@@ -63,7 +64,8 @@ func TestClientRepository_GetByID_Success(t *testing.T) {
 // SCENARIOS_TESTED: Non-existent client ID returns proper error, error message indicates client not found
 func TestClientRepository_GetByID_NotFound(t *testing.T) {
 	// Setup integration test stack
-	stack := testhelpers.NewCleanIntegrationTestStack()
+	stack, cleanup := testhelpers.WithTransaction(t)
+	defer cleanup()
 	repo := stack.ClientRepo
 
 	nonExistentID := "999e4567-e89b-12d3-a456-426614174999"
@@ -83,7 +85,8 @@ func TestClientRepository_GetByID_NotFound(t *testing.T) {
 // SCENARIOS_TESTED: Successful client deletion, verification of removal, handling of non-existent client deletion
 func TestClientRepository_Delete_Success(t *testing.T) {
 	// Setup integration test stack
-	stack := testhelpers.NewCleanIntegrationTestStack()
+	stack, cleanup := testhelpers.WithTransaction(t)
+	defer cleanup()
 	repo := stack.ClientRepo
 
 	// Load test scenarios
@@ -130,7 +133,8 @@ func TestClientRepository_Delete_Success(t *testing.T) {
 // SCENARIOS_TESTED: Non-existent client deletion returns proper error, error indicates client not found
 func TestClientRepository_Delete_NotFound(t *testing.T) {
 	// Setup integration test stack
-	stack := testhelpers.NewCleanIntegrationTestStack()
+	stack, cleanup := testhelpers.WithTransaction(t)
+	defer cleanup()
 	repo := stack.ClientRepo
 
 	nonExistentID := "999e4567-e89b-12d3-a456-426614174999"

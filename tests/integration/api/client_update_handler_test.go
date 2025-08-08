@@ -31,7 +31,8 @@ func TestClientHandler_UpdateClient_Success(t *testing.T) {
 	fullUpdateScenario := scenarios[0] // "Full Update Request"
 
 	// Setup integration test server
-	stack := testhelpers.NewIntegrationTestStack()
+	stack, cleanup := testhelpers.WithTransaction(t)
+	defer cleanup()
 
 	// Create the original client
 	originalClient, err := entity.NewClientWithID(
@@ -90,7 +91,8 @@ func TestClientHandler_UpdateClient_PartialUpdate(t *testing.T) {
 	partialUpdateScenario := scenarios[1] // "Partial Update Request - Name Only"
 
 	// Setup integration test server
-	stack := testhelpers.NewIntegrationTestStack()
+	stack, cleanup := testhelpers.WithTransaction(t)
+	defer cleanup()
 
 	// Create the original client
 	originalClient, err := entity.NewClientWithID(
@@ -151,7 +153,8 @@ func TestClientHandler_UpdateClient_NotFound(t *testing.T) {
 	updateRequest := updateScenarios[0].Request // Any valid update request
 
 	// Setup integration test server
-	stack := testhelpers.NewIntegrationTestStack()
+	stack, cleanup := testhelpers.WithTransaction(t)
+	defer cleanup()
 
 	// Prepare update request
 	requestBody, err := json.Marshal(updateRequest)
@@ -187,7 +190,8 @@ func TestClientHandler_UpdateClient_ValidationError(t *testing.T) {
 	invalidRequests := scenarios[3].InvalidRequests // "Invalid Update Requests"
 
 	// Setup integration test server
-	stack := testhelpers.NewIntegrationTestStack()
+	stack, cleanup := testhelpers.WithTransaction(t)
+	defer cleanup()
 
 	// Create a test client
 	validClient, err := entity.NewClientWithID(
@@ -238,7 +242,8 @@ func TestClientHandler_UpdateClient_ValidationError(t *testing.T) {
 // SCENARIOS_TESTED: Malformed JSON returns 400 Bad Request with appropriate error message
 func TestClientHandler_UpdateClient_InvalidJSON(t *testing.T) {
 	// Setup integration test server
-	stack := testhelpers.NewIntegrationTestStack()
+	stack, cleanup := testhelpers.WithTransaction(t)
+	defer cleanup()
 
 	// Create a test client
 	validClient, err := entity.NewClientWithID(

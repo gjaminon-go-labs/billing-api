@@ -54,7 +54,9 @@ func TestClientHandler_CreateClient(t *testing.T) {
 	testCases := loadHTTPTestCases(t)
 
 	// Set up integration test server with PostgreSQL storage
-	server := testhelpers.NewIntegrationTestServer()
+	stack, cleanup := testhelpers.WithTransaction(t)
+	defer cleanup()
+	server := stack.HTTPServer
 
 	// Test each scenario
 	for _, testCase := range testCases {
@@ -122,7 +124,9 @@ func TestClientHandler_CreateClient(t *testing.T) {
 // SCENARIOS_TESTED: Invalid HTTP methods (PUT instead of POST), proper error messages, security boundaries
 func TestClientHandler_CreateClient_MethodNotAllowed(t *testing.T) {
 	// Set up integration test server with PostgreSQL storage
-	server := testhelpers.NewIntegrationTestServer()
+	stack, cleanup := testhelpers.WithTransaction(t)
+	defer cleanup()
+	server := stack.HTTPServer
 
 	// Test PUT method (should be method not allowed)
 	req := httptest.NewRequest(http.MethodPut, "/api/v1/clients", nil)
@@ -150,7 +154,9 @@ func TestClientHandler_CreateClient_MethodNotAllowed(t *testing.T) {
 // SCENARIOS_TESTED: Malformed JSON requests, clear error responses, graceful error handling
 func TestClientHandler_CreateClient_InvalidJSON(t *testing.T) {
 	// Set up integration test server with PostgreSQL storage
-	server := testhelpers.NewIntegrationTestServer()
+	stack, cleanup := testhelpers.WithTransaction(t)
+	defer cleanup()
+	server := stack.HTTPServer
 
 	// Test invalid JSON
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/clients", bytes.NewReader([]byte("invalid json")))
