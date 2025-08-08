@@ -49,10 +49,10 @@ func TestClientHandler_ListClients_GET_WithClients(t *testing.T) {
 	fixtures := loadHandlerTestFixtures(t)
 
 	// Create test clients from fixtures
-	_, err := billingService.CreateClientLegacy(fixtures[0].Name, fixtures[0].Email, fixtures[0].Phone, fixtures[0].Address)
+	_, err := billingService.CreateClient(fixtures[0].Name, fixtures[0].Email, fixtures[0].Phone, fixtures[0].Address)
 	assert.NoError(t, err)
 
-	_, err = billingService.CreateClientLegacy(fixtures[1].Name, fixtures[1].Email, fixtures[1].Phone, fixtures[1].Address)
+	_, err = billingService.CreateClient(fixtures[1].Name, fixtures[1].Email, fixtures[1].Phone, fixtures[1].Address)
 	assert.NoError(t, err)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/clients", nil)

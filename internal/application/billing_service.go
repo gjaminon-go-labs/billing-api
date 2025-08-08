@@ -22,23 +22,8 @@ func NewBillingService(clientRepo repository.ClientRepository) *BillingService {
 	}
 }
 
-// CreateClient creates a new client from a DTO request
-func (s *BillingService) CreateClient(req dtos.CreateClientRequest) (*entity.Client, error) {
-	client, err := entity.NewClient(req.Name, req.Email, req.Phone, req.Address)
-	if err != nil {
-		return nil, err
-	}
-
-	err = s.clientRepo.Save(client)
-	if err != nil {
-		return nil, err
-	}
-
-	return client, nil
-}
-
-// CreateClientLegacy creates a new client with the provided details and persists it (for backward compatibility)
-func (s *BillingService) CreateClientLegacy(name, email, phone, address string) (*entity.Client, error) {
+// CreateClient creates a new client with the provided details and persists it
+func (s *BillingService) CreateClient(name, email, phone, address string) (*entity.Client, error) {
 	client, err := entity.NewClient(name, email, phone, address)
 	if err != nil {
 		return nil, err

@@ -128,13 +128,12 @@ func TestClientHandler_ListClients_WithPagination(t *testing.T) {
 
 			// Create test clients
 			for i := 0; i < tt.setupClients; i++ {
-				createReq := dtos.CreateClientRequest{
-					Name:    fmt.Sprintf("Client %02d", i),
-					Email:   fmt.Sprintf("client%d@test.com", i),
-					Phone:   "+1234567890",
-					Address: fmt.Sprintf("Address %d", i),
-				}
-				_, err := billingService.CreateClient(createReq)
+				_, err := billingService.CreateClient(
+					fmt.Sprintf("Client %02d", i),
+					fmt.Sprintf("client%d@test.com", i),
+					"+1234567890",
+					fmt.Sprintf("Address %d", i),
+				)
 				require.NoError(t, err)
 			}
 
@@ -245,13 +244,12 @@ func TestBillingService_ListClientsWithPagination(t *testing.T) {
 
 			// Create test clients
 			for i := 0; i < tt.totalClients; i++ {
-				createReq := dtos.CreateClientRequest{
-					Name:    fmt.Sprintf("Client %03d", i),
-					Email:   fmt.Sprintf("client%d@test.com", i),
-					Phone:   "+1234567890",
-					Address: fmt.Sprintf("Address %d", i),
-				}
-				_, err := service.CreateClient(createReq)
+				_, err := service.CreateClient(
+					fmt.Sprintf("Client %03d", i),
+					fmt.Sprintf("client%d@test.com", i),
+					"+1234567890",
+					fmt.Sprintf("Address %d", i),
+				)
 				require.NoError(t, err)
 			}
 

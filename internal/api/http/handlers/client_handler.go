@@ -49,7 +49,7 @@ func (h *ClientHandler) CreateClient(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Call application service
-	client, err := h.billingService.CreateClientLegacy(req.Name, req.Email, req.Phone, req.Address)
+	client, err := h.billingService.CreateClient(req.Name, req.Email, req.Phone, req.Address)
 	if err != nil {
 		h.handleDomainError(w, err)
 		return
