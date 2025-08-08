@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/gjaminon-go-labs/billing-api/compare/v1.1.2...v1.2.0) (2025-08-08)
+
+
+### Features
+
+* add foo.txt test file ([90e3a4e](https://github.com/gjaminon-go-labs/billing-api/commit/90e3a4e975a288b1db6109268308b0586ab76448))
+
 ## [1.1.2](https://github.com/gjaminon-go-labs/billing-api/compare/v1.1.1...v1.1.2) (2025-08-08)
 
 
