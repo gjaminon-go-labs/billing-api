@@ -131,7 +131,7 @@ migrate-reset:
 # Application commands  
 run-dev:
 	@echo "Starting application in development mode..."
-	ENVIRONMENT=development go run cmd/api/main.go
+	ENVIRONMENT=development exec -a go-billing-api go run cmd/api/main.go
 
 # Build commands
 build:
